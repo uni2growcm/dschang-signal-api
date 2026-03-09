@@ -1,5 +1,6 @@
 package codylab.dschang_signal.controller;
 
+import codylab.dschang_signal.entity.User;
 import codylab.dschang_signal.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping(name = "/all")
     public ResponseEntity<Page<User>> getAllUsers(
