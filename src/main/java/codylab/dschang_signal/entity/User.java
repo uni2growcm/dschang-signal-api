@@ -1,10 +1,7 @@
 package codylab.dschang_signal.entity;
-
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.AnyDiscriminatorImplicitValues;
-import org.hibernate.type.descriptor.jdbc.TimestampWithTimeZoneJdbcType;
-import java.security.Timestamp;
+import java.sql.Timestamp;
 
 @Data
 @Entity
@@ -25,8 +22,11 @@ public class User {
     @Column(nullable = false)
     private String role;
 
-    @Column(nullable = false)
-    private TimestampWithTimeZoneJdbcType created_ad;
+    @Column(nullable = false,updatable = false)
+    private Timestamp created_at;
+
+    @Column(nullable = false,updatable = true)
+    private Timestamp updatable_at;
 
     @Column(name = "is_active", nullable = false)
     private Boolean is_active;
