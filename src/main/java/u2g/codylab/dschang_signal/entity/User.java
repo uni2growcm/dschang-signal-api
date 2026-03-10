@@ -1,5 +1,4 @@
-package codylab.dschang_signal.entity;
-
+package u2g.codylab.dschang_signal.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
@@ -13,7 +12,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column( unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)
@@ -28,8 +27,8 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Timestamp createdAt;
 
-    @Column(name = "updatable_at", nullable = false)
-    private Timestamp updatableAt;
+    @Column(name = "updated_at", nullable = false, updatable = true)
+    private Timestamp updatedAt;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
