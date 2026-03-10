@@ -1,4 +1,5 @@
 package codylab.dschang_signal.entity;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
@@ -7,28 +8,29 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column( unique = true, nullable = false)
+
+    @Column(unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private String full_name;
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
 
     @Column(nullable = false)
     private String role;
 
-    @Column(nullable = false,updatable = false)
-    private Timestamp created_at;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Timestamp createdAt;
 
-    @Column(nullable = false,updatable = true)
-    private Timestamp updatable_at;
+    @Column(name = "updatable_at", nullable = false)
+    private Timestamp updatableAt;
 
     @Column(name = "is_active", nullable = false)
-    private Boolean is_active;
-
+    private Boolean isActive;
 }
