@@ -186,3 +186,14 @@ components:
         isActive:
           type: boolean
           example: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        message:
+          type: string
