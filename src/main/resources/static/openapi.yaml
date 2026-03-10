@@ -21,7 +21,6 @@ paths:
         - $ref: "#/components/parameters/Page"
         - $ref: "#/components/parameters/Size"
         - $ref: "#/components/parameters/Sort"
-
       responses:
         '200':
           description: Paginated list of users
@@ -56,12 +55,24 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
+                $ref: '#/components/schemas/AuthResponse'
 
-
+  /register:
+    post:
+      operationId: register
+      tags: [ Auth ]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created successfully
+        '409':
+          description: Email already in use
 
 components:
   headers:
@@ -82,7 +93,6 @@ components:
     Page:
       name: page
       in: query
-      description: Page number
       required: false
       schema:
         type: integer
@@ -91,7 +101,6 @@ components:
     Size:
       name: size
       in: query
-      description: Number of items per page
       required: false
       schema:
         type: integer
@@ -100,7 +109,6 @@ components:
     Sort:
       name: sort
       in: query
-      description: 'Sorting criteria (example: fullName)'
       required: false
       schema:
         type: string
@@ -110,13 +118,43 @@ components:
     LoginRequest:
       type: object
       required:
-        - username
+        - email
         - password
       properties:
-        username:
+        email:
           type: string
+          format: email
+          example: moi@u2g.com
         password:
           type: string
+          format: password
+          example: P@ssword1
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - fullName
+      properties:
+        email:
+          type: string
+          format: email
+          example: moi@u2g.com
+        password:
+          type: string
+          format: password
+          example: P@ssword1
+        fullName:
+          type: string
+          example: Duval Moi
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+
     User:
       type: object
       properties:
@@ -141,12 +179,10 @@ components:
         createdAt:
           type: string
           format: date-time
-          example: 2026-03-09T10:15:30Z
           readOnly: true
         updatedAt:
           type: string
           format: date-time
-          example: 2026-03-09T12:20:00Z
         isActive:
           type: boolean
           example: true
