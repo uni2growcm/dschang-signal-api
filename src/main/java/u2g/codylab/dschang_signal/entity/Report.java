@@ -27,8 +27,9 @@ public class Report {
     @Column(name = "photo_url")
     private String photoUrl;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "moderation_status", nullable = false)
-    private String moderationStatus;
+    private ModerationStatus moderationStatus;
 
     @Column(name = "report_status")
     private String reportStatus;
