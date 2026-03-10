@@ -1,4 +1,4 @@
-package codylab.dschang_signal.entity;
+package u2g.codylab.dschang_signal.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -22,27 +22,26 @@ public class Report {
     private String category;
 
     @Column(name = "location_text")
-    private String location_text;
+    private String locationText;
 
     @Column(name = "photo_url")
-    private String photo_url;
+    private String photoUrl;
 
     @Column(name = "moderation_status", nullable = false)
-    private String moderation_status;
+    private String moderationStatus;
 
-    @Column(name = "report_statuts")
-    private String report_statuts;
+    @Column(name = "report_status")
+    private String reportStatus;
 
     @Column(name = "rejection_reason")
-    private  String rejection_reason;
+    private  String rejectionReason;
 
     @Column(updatable = false, nullable = false)
-    private Timestamp created_at;
+    private Timestamp createdAt;
 
     @Column(name = "reviewed_at")
-    private Timestamp reviewed_at;
+    private Timestamp reviewedAt;
 
     @Column(updatable = true, nullable = false)
-    private Timestamp updated_at;
+    private Timestamp updatedAt;
 }
-

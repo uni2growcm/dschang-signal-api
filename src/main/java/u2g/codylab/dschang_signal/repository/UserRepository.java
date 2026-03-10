@@ -1,6 +1,6 @@
-package codylab.dschang_signal.repository;
+package u2g.codylab.dschang_signal.repository;
 
-import codylab.dschang_signal.entity.User;
+import u2g.codylab.dschang_signal.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
