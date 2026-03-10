@@ -16,7 +16,6 @@ tags:
   - name: Category
 
 paths:
-
   /login:
     post:
       operationId: login
@@ -105,18 +104,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CategoryResponse'
-#        '400':
-#          description: Invalid input (e.g., duplicate name)
-#          content:
-#            application/json:
-#              schema:
-#                $ref: '#/components/schemas/ErrorResponse'
-#        '401':
-#          description: Unauthorized
-#          content:
-#            application/json:
-#              schema:
-#                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Duplicate input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   securitySchemes:
@@ -275,3 +280,14 @@ components:
           type: string
           example: "user@email.com"
           description: ID of the creator
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        message:
+          type: string

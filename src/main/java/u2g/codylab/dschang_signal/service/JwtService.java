@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import u2g.codylab.dschang_signal.exception.UnauthorizedException;
 
 import java.util.Date;
 
@@ -30,7 +31,11 @@ public class JwtService {
     }
 
     public String extractEmail(String token) {
-        return getClaims(token).getSubject();
+        try {
+            return getClaims(token).getSubject();
+        } catch (Exception e) {
+            throw new UnauthorizedException("Invalid or malformed token");
+        }
     }
 
     public boolean validateToken(String token) {
@@ -42,9 +47,13 @@ public class JwtService {
     }
 
     private Claims getClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(secret.getBytes())
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parser()
+                    .setSigningKey(secret.getBytes())
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (Exception e) {
+            throw new UnauthorizedException("Invalid or expired token");
+        }
     }
 }
