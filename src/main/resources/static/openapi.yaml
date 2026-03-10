@@ -7,11 +7,56 @@ info:
 servers:
   - url: http://localhost:8080/api
 
+security:
+  - bearerAuth: []
+
 tags:
   - name: Auth
   - name: User
+  - name: Category
 
 paths:
+
+  /login:
+    post:
+      operationId: login
+      tags: [ Auth ]
+      summary: Login user
+      security:
+        - basicAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /register:
+    post:
+      operationId: register
+      tags: [ Auth ]
+      summary: Register a new user
+      security:
+        - basicAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created successfully
+        '409':
+          description: Email already in use
+
   /users:
     get:
       operationId: getAllUsers
@@ -38,43 +83,47 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
 
-  /login:
+  /categories:
     post:
-      operationId: login
-      tags: [ Auth ]
-      summary: Login user
+      tags:
+        - Category
+      summary: Create a new category
+      description: Create a category
+      operationId: createCategory
+      security:
+        - bearerAuth: [ ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: '#/components/schemas/CategoryRequest'
       responses:
-        '200':
-          description: JWT token
+        '201':
+          description: Category created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-
-  /register:
-    post:
-      operationId: register
-      tags: [ Auth ]
-      summary: Register a new user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterRequest'
-      responses:
-        '201':
-          description: User created successfully
-        '409':
-          description: Email already in use
+                $ref: '#/components/schemas/CategoryResponse'
+#        '400':
+#          description: Invalid input (e.g., duplicate name)
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/ErrorResponse'
+#        '401':
+#          description: Unauthorized
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/ErrorResponse'
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   headers:
     X-Total-Count:
       schema:
@@ -186,3 +235,43 @@ components:
         isActive:
           type: boolean
           example: true
+
+    CategoryRequest:
+      required:
+        - name
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Road"
+          maxLength: 50
+          minLength: 2
+        color:
+          type: string
+          example: "#FFD700"
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Hex color code (optional, random if not provided)
+
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Road"
+          maxLength: 255
+        color:
+          type: string
+          example: "#FF5733"
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Hex color code (e.g., #FF5733)
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-10T10:30:00Z"
+        createdBy:
+          type: string
+          example: "user@email.com"
+          description: ID of the creator
