@@ -1,10 +1,10 @@
 CREATE TABLE IF NOT EXISTS users (
-                                     id            BIGSERIAL PRIMARY KEY,
-                                     email         VARCHAR(255) NOT NULL UNIQUE,
-    password      VARCHAR(255) NOT NULL,
-    full_name     VARCHAR(255) NOT NULL,
-    role          VARCHAR(50)  NOT NULL,
-    created_at    TIMESTAMP    NOT NULL,
-    updatable_at  TIMESTAMP    NOT NULL,
-    is_active     BOOLEAN      NOT NULL
+                                     id           BIGSERIAL    PRIMARY KEY,
+                                     email        VARCHAR(255) NOT NULL UNIQUE,
+    password     VARCHAR(255) NOT NULL,
+    full_name    VARCHAR(255) NOT NULL,
+    role         VARCHAR(50)  NOT NULL,
+    created_at   TIMESTAMP    NOT NULL,
+    updatable_at TIMESTAMP    NOT NULL,
+    is_active    BOOLEAN      NOT NULL
     );

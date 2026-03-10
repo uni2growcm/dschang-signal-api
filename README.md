@@ -1,9 +1,9 @@
 # Dschang's Signal — API
 
 > REST API backend for the Dschang's Signal citizen issue reporting platform.  
-> Built with **Spring Boot 3 · Java 21 · PostgreSQL**
+> Built with **Spring Boot 4 · Java 21 · PostgreSQL**
 
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3-6DB33F?logo=springboot)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4-6DB33F?logo=springboot)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk)](https://openjdk.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql)](https://www.postgresql.org)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://docs.docker.com/compose)
@@ -63,7 +63,7 @@ cd dschang-signal-api
 ### 2. Start the database
 
 ```bash
-docker compose up -d db
+docker compose up -d dschang-signal
 ```
 
 This starts a PostgreSQL 15 container and exposes it on `localhost:5432`. Flyway migrations run automatically on the first application startup.
