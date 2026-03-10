@@ -8,6 +8,10 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "reports")
 public class Report {
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User author;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
