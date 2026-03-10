@@ -2,11 +2,13 @@ package u2g.codylab.dschang_signal.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
+import java.util.Map;
 
 @Data
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,5 +34,4 @@ public class User {
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
-
 }
