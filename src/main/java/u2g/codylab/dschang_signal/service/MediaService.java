@@ -1,11 +1,13 @@
 package u2g.codylab.dschang_signal.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import u2g.codylab.dschang_signal.dto.MediaResponseApiDTO;
 import u2g.codylab.dschang_signal.entity.Media;
+import u2g.codylab.dschang_signal.mapper.MediaMapper;
 import u2g.codylab.dschang_signal.repository.MediaRepository;
 
 import java.io.IOException;
@@ -14,37 +16,65 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class MediaService {
 
+    private final MediaMapper mediaMapper;
     private final MediaRepository mediaRepository;
     private final StorageService storageService;
 
 
-    public Media upload(MultipartFile file, String description) {
+//    public Media upload(MultipartFile file, String description) {
+//
+//        String mimeType   = detectMimeType(file);
+//        String mediaType  = resolveMediaType(mimeType);
+//        String hash       = generateHash(file);
+//        String url        = storageService.store(file, mediaType, hash);
+//
+//        Media media = new Media();
+//        media.setDescription(description);
+//        media.setType(mediaType);
+//        media.setMimeType(mimeType);
+//        media.setUrl(url);
+//        media.setOriginalName(file.getOriginalFilename());
+//        media.setFileSize(file.getSize());
+//
+//        return mediaRepository.save(media);
+//    }
+public MediaResponseApiDTO upload(MultipartFile file, String description) {
+    log.info("Uploading file: {}, size: {}",
+            file.getOriginalFilename(), file.getSize());
 
-        String mimeType   = detectMimeType(file);
-        String mediaType  = resolveMediaType(mimeType);
-        String hash       = generateHash(file);
-        String url        = storageService.store(file, mediaType, hash);
+    // 2. Détecter les métadonnées
+    String mimeType = detectMimeType(file);
+    String mediaType = resolveMediaType(mimeType);
+    String hash = generateHash(file);
 
-        Media media = new Media();
-        media.setDescription(description);
-        media.setType(mediaType);
-        media.setMimeType(mimeType);
-        media.setUrl(url);
-        media.setOriginalName(file.getOriginalFilename());
-        media.setFileSize(file.getSize());
 
-        return mediaRepository.save(media);
-    }
+    // 4. Construire l'URL et stocker le fichier
+    String url = storageService.store(file, mediaType, hash);
 
+    // 5. Créer et sauvegarder l'entité Media
+    Media media = new Media();
+    media.setDescription(description != null ? description : "");
+    media.setType(mediaType);
+    media.setMimeType(mimeType);
+    media.setUrl(url);
+    media.setOriginalName(file.getOriginalFilename());
+    media.setFileSize(file.getSize());
+
+    Media savedMedia = mediaRepository.save(media);
+    log.info("Media saved with url: {}", savedMedia.getUrl());
+    return mediaMapper.toMediaDTO(savedMedia);
+}
 
     @Transactional(readOnly = true)
-    public List<Media> getAll() {
-        return mediaRepository.findAll();
+    public List<MediaResponseApiDTO> getAllMedias() {
+        return mediaRepository.findAll()
+                .stream().map(mediaMapper::toMediaDTO).toList();
     }
 
 

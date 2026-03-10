@@ -12,7 +12,7 @@ import java.nio.file.*;
 
 @Service
 @Profile("!s3")
-public class LocalStorageService implements StorageService {
+public class StorageServiceImpl implements StorageService {
 
     @Value("${storage.local.path}")
     private String basePath;
@@ -33,7 +33,7 @@ public class LocalStorageService implements StorageService {
                 Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Échec de la sauvegarde : " + relativePath, e);
+            throw new RuntimeException("Failed to save image in: " + relativePath, e);
         }
 
         return baseUrl + "/" + relativePath;

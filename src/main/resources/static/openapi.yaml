@@ -61,7 +61,6 @@ paths:
                   token:
                     type: string
 
-
   /media:
     post:
       operationId: uploadMedia
@@ -224,5 +223,8 @@ components:
         fileSize:
           type: integer
         createdAt:
+          type: string
+          format: date-time
+        updatedAt:
           type: string
           format: date-time
