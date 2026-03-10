@@ -39,6 +39,46 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
 
+  /users/{id}:
+    get:
+      operationId: getUserById
+      tags: [ User ]
+      summary: Get a specific user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: integer
+            format: int64
+            example: 4
+      responses:
+        '200':
+          description: User found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2026-03-10T07:00:00.000Z"
+                status: 404
+                error: Not Found
+                message: L'utilisateur avec l'ID 4 n'existe pas.
+                path: /api/users/4
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /login:
     post:
       operationId: login
@@ -117,6 +157,7 @@ components:
           type: string
         password:
           type: string
+
     User:
       type: object
       properties:
@@ -150,3 +191,18 @@ components:
         isActive:
           type: boolean
           example: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string

@@ -1,6 +1,9 @@
 package u2g.codylab.dschang_signal.service;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import u2g.codylab.dschang_signal.dto.UserApiDTO;
+import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.mapper.UserMapper;
 import u2g.codylab.dschang_signal.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -28,5 +31,13 @@ public class UserService {
                 .map(userMapper::toUserDTO);
         log.debug("Request to get all Users : {}", dtos.getContent().size());
         return dtos;
+    }
+
+    public UserApiDTO getUserById(Long id) {
+        log.debug("Request to etch user y id");
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("L'utilisateur avec l'ID " + id + " n'existe pas."));
+        log.debug("User with id {} ound", user.getId());
+        return userMapper.toUserDTO(user);
     }
 }
