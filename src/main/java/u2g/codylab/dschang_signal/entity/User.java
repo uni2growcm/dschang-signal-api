@@ -20,8 +20,9 @@ public class User {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role;
+    private Role role;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Timestamp createdAt;
