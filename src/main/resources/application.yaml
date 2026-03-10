@@ -1,6 +1,7 @@
 spring:
   application:
     name: dschang-signal
+  profiles:
     active: local
   datasource:
     url: jdbc:postgresql://localhost:5432/dschang-signal

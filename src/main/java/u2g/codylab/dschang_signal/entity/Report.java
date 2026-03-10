@@ -1,4 +1,4 @@
-package codylab.dschang_signal.entity;
+package u2g.codylab.dschang_signal.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
