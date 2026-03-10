@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import u2g.codylab.dschang_signal.exception.BadRequestException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +34,7 @@ public class StorageServiceImpl implements StorageService {
                 Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save image in: " + relativePath, e);
+            throw new BadRequestException("Failed to save media in: " + relativePath);
         }
 
         return baseUrl + "/" + relativePath;
@@ -47,7 +48,7 @@ public class StorageServiceImpl implements StorageService {
         try {
             Files.deleteIfExists(targetPath);
         } catch (IOException e) {
-            throw new RuntimeException("Échec de la suppression du fichier : " + relativePath, e);
+            throw new BadRequestException("Failed to delete media in : " + relativePath);
         }
     }
 

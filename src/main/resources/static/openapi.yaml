@@ -21,7 +21,6 @@ paths:
         - $ref: "#/components/parameters/Page"
         - $ref: "#/components/parameters/Size"
         - $ref: "#/components/parameters/Sort"
-
       responses:
         '200':
           description: Paginated list of users
@@ -56,10 +55,24 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
+                $ref: '#/components/schemas/AuthResponse'
+
+  /register:
+    post:
+      operationId: register
+      tags: [ Auth ]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created successfully
+        '409':
+          description: Email already in use
 
   /media:
     post:
@@ -164,13 +177,43 @@ components:
     LoginRequest:
       type: object
       required:
-        - username
+        - email
         - password
       properties:
-        username:
+        email:
           type: string
+          format: email
+          example: moi@u2g.com
         password:
           type: string
+          format: password
+          example: P@ssword1
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - fullName
+      properties:
+        email:
+          type: string
+          format: email
+          example: moi@u2g.com
+        password:
+          type: string
+          format: password
+          example: P@ssword1
+        fullName:
+          type: string
+          example: Duval Moi
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+
     User:
       type: object
       properties:
@@ -228,3 +271,14 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        message:
+          type: string

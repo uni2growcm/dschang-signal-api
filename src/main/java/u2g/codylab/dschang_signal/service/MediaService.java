@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import u2g.codylab.dschang_signal.dto.MediaResponseApiDTO;
 import u2g.codylab.dschang_signal.entity.Media;
+import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.mapper.MediaMapper;
 import u2g.codylab.dschang_signal.repository.MediaRepository;
 
@@ -26,50 +27,28 @@ public class MediaService {
     private final MediaRepository mediaRepository;
     private final StorageService storageService;
 
+    public MediaResponseApiDTO upload(MultipartFile file, String description) {
+        log.info("Uploading file: {}, size: {}",
+                file.getOriginalFilename(), file.getSize());
 
-//    public Media upload(MultipartFile file, String description) {
-//
-//        String mimeType   = detectMimeType(file);
-//        String mediaType  = resolveMediaType(mimeType);
-//        String hash       = generateHash(file);
-//        String url        = storageService.store(file, mediaType, hash);
-//
-//        Media media = new Media();
-//        media.setDescription(description);
-//        media.setType(mediaType);
-//        media.setMimeType(mimeType);
-//        media.setUrl(url);
-//        media.setOriginalName(file.getOriginalFilename());
-//        media.setFileSize(file.getSize());
-//
-//        return mediaRepository.save(media);
-//    }
-public MediaResponseApiDTO upload(MultipartFile file, String description) {
-    log.info("Uploading file: {}, size: {}",
-            file.getOriginalFilename(), file.getSize());
+        String mimeType = detectMimeType(file);
+        String mediaType = resolveMediaType(mimeType);
+        String hash = generateHash(file);
 
-    // 2. Détecter les métadonnées
-    String mimeType = detectMimeType(file);
-    String mediaType = resolveMediaType(mimeType);
-    String hash = generateHash(file);
+        String url = storageService.store(file, mediaType, hash);
 
+        Media media = new Media();
+        media.setDescription(description != null ? description : "");
+        media.setType(mediaType);
+        media.setMimeType(mimeType);
+        media.setUrl(url);
+        media.setOriginalName(file.getOriginalFilename());
+        media.setFileSize(file.getSize());
 
-    // 4. Construire l'URL et stocker le fichier
-    String url = storageService.store(file, mediaType, hash);
-
-    // 5. Créer et sauvegarder l'entité Media
-    Media media = new Media();
-    media.setDescription(description != null ? description : "");
-    media.setType(mediaType);
-    media.setMimeType(mimeType);
-    media.setUrl(url);
-    media.setOriginalName(file.getOriginalFilename());
-    media.setFileSize(file.getSize());
-
-    Media savedMedia = mediaRepository.save(media);
-    log.info("Media saved with url: {}", savedMedia.getUrl());
-    return mediaMapper.toMediaDTO(savedMedia);
-}
+        Media savedMedia = mediaRepository.save(media);
+        log.info("Media saved with url: {}", savedMedia.getUrl());
+        return mediaMapper.toMediaDTO(savedMedia);
+    }
 
     @Transactional(readOnly = true)
     public List<MediaResponseApiDTO> getAllMedias() {
@@ -80,8 +59,8 @@ public MediaResponseApiDTO upload(MultipartFile file, String description) {
 
     public void delete(Integer mediaId) {
         Media media = mediaRepository.findById(mediaId.longValue())
-                .orElseThrow(() -> new RuntimeException(
-                        "Media avec l'id " + mediaId + " introuvable"));
+                .orElseThrow(() -> new BadRequestException(
+                        "Media with id " + mediaId + " not found"));
         storageService.delete(media.getUrl());
         mediaRepository.delete(media);
     }
@@ -123,7 +102,7 @@ public MediaResponseApiDTO upload(MultipartFile file, String description) {
             byte[] hashBytes = digest.digest(file.getBytes());
             return HexFormat.of().formatHex(hashBytes).substring(0, 20);
         } catch (NoSuchAlgorithmException | IOException e) {
-            throw new RuntimeException("Impossible de générer le hash du fichier", e);
+            throw new BadRequestException("Failed to generate media hash");
         }
     }
 
