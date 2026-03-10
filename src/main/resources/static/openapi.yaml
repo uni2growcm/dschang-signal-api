@@ -10,6 +10,7 @@ servers:
 tags:
   - name: Auth
   - name: User
+  - name: Report
 
 paths:
   /users:
@@ -73,6 +74,113 @@ paths:
           description: User created successfully
         '409':
           description: Email already in use
+
+  /reports/admin:
+    get:
+      tags: [ Report ]
+      summary: Get all reports (Admin only)
+      description: Retrieve all reports in the system with pagination and filtering.
+      operationId: getAllReports
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: page
+          in: query
+          description: Page number (zero-based)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: 'Sort by field and direction'
+          required: false
+          schema:
+            type: string
+            default: 'reportStatus'
+            example: 'createdAt,desc'
+        - name: moderationStatus
+          in: query
+          description: Filter by moderation status
+          required: false
+          schema:
+            type: string
+            enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
+        - name: reportStatus
+          in: query
+          description: Filter by report status
+          required: false
+          schema:
+            type: string
+            enum: [ PENDING, IN_PROGRESS, RESOLVED ]
+        - name: category
+          in: query
+          description: Filter by category
+          required: false
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          description: Filter reports created after this date (ISO format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: toDate
+          in: query
+          description: Filter reports created before this date (ISO format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successful operation
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of elements
+            X-Page-Number:
+              schema:
+                type: integer
+              description: Current page number
+            X-Page-Size:
+              schema:
+                type: integer
+              description: Number of items per page
+            X-Total-Pages:
+              schema:
+                type: integer
+              description: Total number of pages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportResponse'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   headers:
@@ -186,6 +294,69 @@ components:
         isActive:
           type: boolean
           example: true
+
+    ReportResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 42
+        title:
+          type: string
+          example: "Pothole on Kennedy Avenue"
+        description:
+          type: string
+          example: "Large dangerous pothole on the roadway"
+        category:
+          type: string
+          example: "ROAD"
+        locationText:
+          type: string
+          example: "Kennedy Avenue, in front of the university"
+        photoUrl:
+          type: string
+          example: "/uploads/reports/42/photo.jpg"
+          nullable: true
+        moderationStatus:
+          type: string
+          enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
+          example: "PENDING_REVIEW"
+        reportStatus:
+          type: string
+          enum: [ PENDING, IN_PROGRESS, RESOLVED ]
+          example: "PENDING"
+        rejectionReason:
+          type: string
+          example: "Area not covered by municipality"
+        authorId:
+          type: integer
+          example: 15
+        authorName:
+          type: string
+          example: "Jean Pierre"
+        authorEmail:
+          type: string
+          example: "jean.pierre@email.com"
+        reviewedById:
+          type: integer
+          example: 1
+          nullable: true
+        reviewedByName:
+          type: string
+          example: "Admin User"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-10T14:30:00Z"
+        reviewedAt:
+          type: string
+          format: date-time
+          example: "2026-03-11T09:15:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-03-10T14:30:00Z"
 
     ErrorResponse:
       type: object
