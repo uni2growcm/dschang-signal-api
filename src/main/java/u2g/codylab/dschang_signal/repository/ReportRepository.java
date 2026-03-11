@@ -5,6 +5,4 @@ import org.springframework.stereotype.Repository;
 import u2g.codylab.dschang_signal.entity.Report;
 
 @Repository
-public interface ReportRepository extends JpaRepository<Report, Long> {
-
-}
+public interface ReportRepository extends JpaRepository<Report, Long> { }

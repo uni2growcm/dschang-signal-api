@@ -14,7 +14,6 @@ import java.time.ZoneOffset;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ReportMapper {
 
-    // ENTITY -> DTO
     @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "timestampToOffsetDateTime")
     @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "timestampToOffsetDateTime")
     @Mapping(source = "reviewedAt", target = "reviewedAt", qualifiedByName = "timestampToOffsetDateTime")
