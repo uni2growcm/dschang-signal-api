@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import u2g.codylab.dschang_signal.dto.ErrorResponseApiDTO;
 
@@ -13,6 +14,16 @@ import java.time.OffsetDateTime;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponseApiDTO> handleException(RuntimeException e) {
+        log.error(e.getMessage());
+        ErrorResponseApiDTO error = new ErrorResponseApiDTO()
+                .timestamp(OffsetDateTime.now())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .message(e.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
     @ExceptionHandler(ErrorResponseException.class)
     public ResponseEntity<ErrorResponseApiDTO> handleErrorResponse(ErrorResponseException ex) {

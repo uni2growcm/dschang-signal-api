@@ -14,6 +14,3 @@ spring:
 
 server:
   base-path: /api
-jwt:
-  secret: dschang-signal-secret-key-must-be-at-least-32-chars
-  expiration: 86400000

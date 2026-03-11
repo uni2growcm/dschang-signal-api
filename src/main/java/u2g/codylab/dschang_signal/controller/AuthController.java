@@ -11,6 +11,7 @@ import u2g.codylab.dschang_signal.dto.RegisterRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.service.AuthService;
 import u2g.codylab.dschang_signal.service.JwtService;
+import u2g.codylab.dschang_signal.service.TokenBlacklistService;
 
 @Slf4j
 @RestController
@@ -18,16 +19,20 @@ public class AuthController implements AuthApi {
 
     private final AuthService authService;
     private final JwtService jwtService;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public AuthController(AuthService authService, JwtService jwtService) {
+    public AuthController(AuthService authService,
+                          JwtService jwtService,
+                          TokenBlacklistService tokenBlacklistService) {
         this.authService = authService;
         this.jwtService = jwtService;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
-
     @Override
     public ResponseEntity<AuthResponseApiDTO> login(LoginRequestApiDTO loginRequestApiDTO) {
         User user = authService.login(loginRequestApiDTO);
         String token = jwtService.generateToken(user.getEmail());
+        tokenBlacklistService.registerActiveToken(user.getEmail(), token);
         AuthResponseApiDTO response = new AuthResponseApiDTO();
         response.setToken(token);
         return ResponseEntity.ok(response);
@@ -37,5 +42,10 @@ public class AuthController implements AuthApi {
     public ResponseEntity<Void> register(RegisterRequestApiDTO registerRequestApiDTO) {
         authService.register(registerRequestApiDTO);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Override
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.ok().build();
     }
 }

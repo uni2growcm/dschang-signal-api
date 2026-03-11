@@ -16,6 +16,7 @@ public interface CategoryMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true) // To delete
     Category toEntity(CategoryRequestApiDTO categoryRequestApiDTO);
 
     @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "timestampToOffsetDateTime")
