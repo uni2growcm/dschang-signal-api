@@ -13,15 +13,24 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 0
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 100MB
+  web:
+    resources:
+      static-locations: file:${STORAGE_LOCAL_PATH:./uploads}/
 
 server:
   base-path: /api
-
-jwt:
-  secret: dschang-signal-secret-key-must-be-at-least-32-chars
-  expiration: 86400000
 
 logging:
   level:
     org.flywaydb: DEBUG
     org.springframework.boot.autoconfigure.flyway: DEBUG
+
+storage:
+  local:
+    path: ${STORAGE_LOCAL_PATH:./uploads}
+    base-url: /uploads
