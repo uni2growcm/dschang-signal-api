@@ -27,7 +27,3 @@ storage:
   local:
     path: ${STORAGE_LOCAL_PATH:./uploads}
     base-url: /uploads
-
-jwt:
-  secret: dschang-signal-secret-key-must-be-at-least-32-chars
-  expiration: 86400000

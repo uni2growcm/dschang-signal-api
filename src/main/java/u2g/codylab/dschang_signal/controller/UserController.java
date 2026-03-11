@@ -1,7 +1,10 @@
 package u2g.codylab.dschang_signal.controller;
 
+import org.springframework.web.bind.annotation.PathVariable;
 import u2g.codylab.dschang_signal.api.UserApi;
 import u2g.codylab.dschang_signal.dto.UserApiDTO;
+import u2g.codylab.dschang_signal.entity.User;
+import u2g.codylab.dschang_signal.mapper.UserMapper;
 import u2g.codylab.dschang_signal.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,5 +30,9 @@ public class UserController implements UserApi {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
         Page<UserApiDTO> users = userService.getAllUsers(pageable);
         return new ResponseEntity<>(users.getContent(), HttpStatus.OK);
+    }
+    @Override
+    public ResponseEntity<UserApiDTO> getUserById(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(userService.getUserById(id));
     }
 }
