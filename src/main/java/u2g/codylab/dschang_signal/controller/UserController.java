@@ -1,10 +1,10 @@
 package u2g.codylab.dschang_signal.controller;
 
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import u2g.codylab.dschang_signal.api.UserApi;
+import u2g.codylab.dschang_signal.dto.ChangeRoleRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UserApiDTO;
-import u2g.codylab.dschang_signal.entity.User;
-import u2g.codylab.dschang_signal.mapper.UserMapper;
 import u2g.codylab.dschang_signal.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,8 +31,15 @@ public class UserController implements UserApi {
         Page<UserApiDTO> users = userService.getAllUsers(pageable);
         return new ResponseEntity<>(users.getContent(), HttpStatus.OK);
     }
+
     @Override
     public ResponseEntity<UserApiDTO> getUserById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
+    }
+
+    @Override
+    public ResponseEntity<UserApiDTO> changeUserRole(@PathVariable("id") Long id,
+                                                     @RequestBody ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
+        return ResponseEntity.ok(userService.changeUserRole(id, changeRoleRequestApiDTO));
     }
 }
