@@ -14,3 +14,7 @@ spring:
 
 server:
   base-path: /api
+
+jwt:
+  secret: "DschangSignalSecureKey2026AdvancedEncryptionStandardKey"
+  expiration: 86400000
