@@ -350,39 +350,6 @@ components:
           type: string
           example: https://example.com/photo.jpg
 
-    Report:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        title:
-          type: string
-        description:
-          type: string
-        category:
-          type: string
-        locationText:
-          type: string
-        photoUrl:
-          type: string
-        moderationStatus:
-          type: string
-          example: PENDING_REVIEW
-        reportStatus:
-          type: string
-          example: PENDING
-        rejectionReason:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        reviewedAt:
-          type: string
-          format: date-time
-        updatedAt:
-           type: string
-           format: date-time
 
     LoginRequest:
       type: object
@@ -477,16 +444,12 @@ components:
           example: 1
         title:
           type: string
-          example: Nid de poule
         description:
           type: string
-          example: Grand nid de poule sur la route
         category:
           type: string
-          example: INFRASTRUCTURE
         locationText:
           type: string
-          example: Avenue Kennedy
         photoUrl:
           type: string
           example: https://example.com/photo.jpg
