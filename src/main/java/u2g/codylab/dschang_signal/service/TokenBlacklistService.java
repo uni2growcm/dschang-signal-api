@@ -10,10 +10,7 @@ import java.util.Set;
 @Service
 public class TokenBlacklistService {
 
-    // tokens explicitement blacklistés (logout)
     private final Set<String> blacklist = new HashSet<>();
-
-    // token actif par utilisateur
     private final Map<String, String> activeTokens = new HashMap<>();
 
     public void blacklist(String token) {
@@ -21,7 +18,6 @@ public class TokenBlacklistService {
     }
 
     public void registerActiveToken(String email, String token) {
-        // si un ancien token existe pour cet email, on le blackliste
         String oldToken = activeTokens.get(email);
         if (oldToken != null) {
             blacklist.add(oldToken);

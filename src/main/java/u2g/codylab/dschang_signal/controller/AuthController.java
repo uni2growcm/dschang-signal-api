@@ -46,7 +46,6 @@ public class AuthController implements AuthApi {
 
     @Override
     public ResponseEntity<Void> logout() {
-        // Géré par Spring Security via CustomLogoutHandler
         return ResponseEntity.ok().build();
     }
 }
