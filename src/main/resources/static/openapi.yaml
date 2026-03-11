@@ -10,6 +10,7 @@ servers:
 tags:
   - name: Auth
   - name: User
+  - name: Report
 
 paths:
   /users:
@@ -71,6 +72,80 @@ paths:
                 error: Not Found
                 message: L'utilisateur avec l'ID 4 n'existe pas.
                 path: /api/users/4
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}/role:
+    patch:
+      operationId: changeUserRole
+      tags: [ User ]
+      summary: Change a user's role (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: integer
+            format: int64
+            example: 4
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeRoleRequest'
+      responses:
+        '200':
+          description: Role updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Forbidden - Admin only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{id}:
+    get:
+      operationId: getReportById
+      tags: [ Report ]
+      summary: Get a specific report by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the report
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: Report found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
@@ -227,6 +302,16 @@ components:
         token:
           type: string
 
+    ChangeRoleRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum: [ ADMIN, CITIZEN ]
+          example: CITIZEN
+
     User:
       type: object
       properties:
@@ -260,6 +345,47 @@ components:
         isActive:
           type: boolean
           example: true
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: Nid de poule
+        description:
+          type: string
+          example: Grand nid de poule sur la route
+        category:
+          type: string
+          example: INFRASTRUCTURE
+        locationText:
+          type: string
+          example: Avenue Kennedy
+        photoUrl:
+          type: string
+          example: https://example.com/photo.jpg
+        moderationStatus:
+          type: string
+          example: PENDING
+        reportStatus:
+          type: string
+          example: OPEN
+        rejectionReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        reviewedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     ErrorResponse:
       type: object
