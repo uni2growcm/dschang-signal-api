@@ -1,7 +1,6 @@
 package u2g.codylab.dschang_signal.service;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+
 import u2g.codylab.dschang_signal.dto.UserApiDTO;
 import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.exception.BadRequestException;
