@@ -4,9 +4,9 @@ spring:
   profiles:
     active: local
   datasource:
-    url: jdbc:postgresql://localhost:5432/dschangsignal
-    username: admin
-    password: admin
+    url: jdbc:postgresql://localhost:5432/dschang-signal
+    username:
+    password:
   jpa:
     hibernate:
       ddl-auto: update
@@ -14,7 +14,3 @@ spring:
 
 server:
   base-path: /api
-
-jwt:
-  secret: "DschangSignalSecureKey2026AdvancedEncryptionStandardKey"
-  expiration: 86400000
