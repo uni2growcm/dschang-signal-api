@@ -7,14 +7,11 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "users")
 public class User {
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
-    private java.util.List<Report> reports = new java.util.ArrayList<>();
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column( unique = true, nullable = false)
 
+    @Column( unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)
