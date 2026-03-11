@@ -5,12 +5,15 @@ spring:
     active: local
   datasource:
     url: jdbc:postgresql://localhost:5432/dschang-signal
-    username:
-    password:
+    username: admin
+    password: admin
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 server:
   base-path: /api
