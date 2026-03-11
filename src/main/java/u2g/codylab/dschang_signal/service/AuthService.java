@@ -8,6 +8,7 @@ import u2g.codylab.dschang_signal.dto.LoginRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.RegisterRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.Role;
 import u2g.codylab.dschang_signal.entity.User;
+import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.exception.ConflictException;
 import u2g.codylab.dschang_signal.exception.UnauthorizedException;
 import u2g.codylab.dschang_signal.repository.UserRepository;
@@ -48,7 +49,7 @@ public class AuthService {
     public User login(LoginRequestApiDTO dto) {
         log.info("Login attempt for: {}", dto.getEmail());
         User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new BadRequestException("Invalid credentials"));
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new UnauthorizedException("Invalid credentials");
         }
