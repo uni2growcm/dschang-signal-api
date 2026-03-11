@@ -7,11 +7,12 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column( unique = true, nullable = false)
 
+    @Column( unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)
@@ -32,5 +33,4 @@ public class User {
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
-
 }
