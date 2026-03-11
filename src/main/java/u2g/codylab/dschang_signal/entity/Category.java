@@ -24,5 +24,5 @@ public class Category {
     private Timestamp createdAt;
 
     @Column(name = "created_by", nullable = false)
-    private String createdBy = "moi"; // Will be modified at time of implementing relationship
+    private String createdBy = "me"; // Will be modified at time of implementing relationship
 }
