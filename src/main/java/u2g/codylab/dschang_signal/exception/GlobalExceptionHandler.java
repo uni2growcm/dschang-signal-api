@@ -27,7 +27,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ErrorResponseException.class)
     public ResponseEntity<ErrorResponseApiDTO> handleErrorResponse(ErrorResponseException ex) {
-        log.error("ErrorResponseException: {}", ex.getMessage(), ex);
+        log.error("ErrorResponseException: {}", ex.getMessage());
         ErrorResponseApiDTO error = new ErrorResponseApiDTO()
                 .timestamp(OffsetDateTime.now())
                 .status(ex.getStatus().value())
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseApiDTO> handleGeneric(Exception ex) {
-        log.error("Unexpected error: {}", ex.getMessage(), ex);
+        log.error("Unexpected error: {}", ex.getMessage());
         ErrorResponseApiDTO error = new ErrorResponseApiDTO()
                 .timestamp(OffsetDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
