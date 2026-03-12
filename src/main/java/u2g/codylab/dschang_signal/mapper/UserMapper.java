@@ -19,6 +19,9 @@ public interface UserMapper {
 
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "reports", ignore = true)
+    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "media", ignore = true)
     User toEntity(UserApiDTO user);
 
     @Named("timestampToOffsetDateTime")

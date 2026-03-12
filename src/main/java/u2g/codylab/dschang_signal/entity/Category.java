@@ -6,7 +6,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Data
@@ -28,10 +27,6 @@ public class Category {
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
-
-    @ManyToOne
-    @JoinColumn(name = "report_id", nullable = false)
-    private Report report;
 
     @ManyToMany(mappedBy = "categories")
     private Set<Report> reports = new HashSet<>();

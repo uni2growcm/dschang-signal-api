@@ -1,13 +1,16 @@
 package u2g.codylab.dschang_signal.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "reports")
 public class Report {
@@ -22,14 +25,8 @@ public class Report {
     @Column(nullable = false)
     private String description;
 
-    @Column(nullable = false)
-    private String category;
-
     @Column(name = "location_text")
     private String locationText;
-
-    @Column(name = "photo_url")
-    private String photoUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "moderation_status", nullable = false)

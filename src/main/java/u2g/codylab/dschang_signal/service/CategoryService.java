@@ -34,6 +34,7 @@ public class CategoryService {
             log.debug("Category created: {}", categoryDTO.getName());
             return categoryDTO;
         } catch (Exception e) {
+            log.error("Error while creating category: {}", categoryRequestApiDTO.getName(), e);
             throw new BadRequestException("Error occurred while creating category, Please try again");
         }
     }
