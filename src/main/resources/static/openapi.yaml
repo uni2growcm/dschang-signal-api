@@ -7,11 +7,79 @@ info:
 servers:
   - url: http://localhost:8080/api
 
+security:
+  - bearerAuth: []
+
 tags:
   - name: Auth
   - name: User
+  - name: Report
+  - name: Category
 
 paths:
+  /login:
+    post:
+      operationId: login
+      tags: [ Auth ]
+      summary: Login user
+      security:
+        - basicAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /register:
+    post:
+      operationId: register
+      tags: [ Auth ]
+      summary: Register a new user
+      security:
+        - basicAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created successfully
+        '409':
+          description: Email already in use
+
+  /logout:
+    post:
+      operationId: logout
+      tags: [ Auth ]
+      summary: Logout user
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Successfully logged out
+        '401':
+          description: Unauthorized - missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /users:
     get:
       operationId: getAllUsers
@@ -38,43 +106,224 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
 
-  /login:
-    post:
-      operationId: login
-      tags: [ Auth ]
-      summary: Login user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
+  /users/{id}:
+    get:
+      operationId: getUserById
+      tags: [ User ]
+      summary: Get a specific user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: integer
+            format: int64
+            example: 4
       responses:
         '200':
-          description: JWT token
+          description: User found successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2026-03-10T07:00:00.000Z"
+                status: 404
+                error: Not Found
+                message: L'utilisateur avec l'ID 4 n'existe pas.
+                path: /api/users/4
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /register:
-    post:
-      operationId: register
-      tags: [ Auth ]
-      summary: Register a new user
+  /users/{id}/role:
+    patch:
+      operationId: changeUserRole
+      tags: [ User ]
+      summary: Change a user's role (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: integer
+            format: int64
+            example: 4
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterRequest'
+              $ref: '#/components/schemas/ChangeRoleRequest'
+      responses:
+        '200':
+          description: Role updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Forbidden - Admin only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{id}:
+    get:
+      operationId: getReportById
+      tags: [ Report ]
+      summary: Get a specific report by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the report
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: Report found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /categories:
+    post:
+      tags:
+        - Category
+      summary: Create a new category
+      description: Create a category
+      operationId: createCategory
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
       responses:
         '201':
-          description: User created successfully
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: Email already in use
+          description: Duplicate input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /media:
+    post:
+      operationId: uploadMedia
+      tags: [ Media ]
+      summary: Upload a media file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [ file ]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Media uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaResponse'
+
+    get:
+      operationId: getAllMedia
+      tags: [ Media ]
+      summary: Get all media files
+      responses:
+        '200':
+          description: List of media files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaResponse'
+
+  /media/{mediaId}:
+      delete:
+        operationId: deleteMedia
+        tags: [ Media ]
+        summary: Delete a media file
+        parameters:
+          - name: mediaId
+            in: path
+            required: true
+            schema:
+              type: integer
+        responses:
+          '204':
+            description: Media deleted successfully
+
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   headers:
     X-Total-Count:
       schema:
@@ -93,6 +342,7 @@ components:
     Page:
       name: page
       in: query
+      description: Page number
       required: false
       schema:
         type: integer
@@ -101,6 +351,7 @@ components:
     Size:
       name: size
       in: query
+      description: Number of items per page
       required: false
       schema:
         type: integer
@@ -109,6 +360,7 @@ components:
     Sort:
       name: sort
       in: query
+      description: 'Sorting criteria (example: fullName)'
       required: false
       schema:
         type: string
@@ -155,6 +407,16 @@ components:
         token:
           type: string
 
+    ChangeRoleRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum: [ ADMIN, CITIZEN ]
+          example: CITIZEN
+
     User:
       type: object
       properties:
@@ -179,10 +441,128 @@ components:
         createdAt:
           type: string
           format: date-time
+          example: 2026-03-09T10:15:30Z
           readOnly: true
         updatedAt:
           type: string
           format: date-time
+          example: 2026-03-09T12:20:00Z
         isActive:
           type: boolean
           example: true
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: Nid de poule
+        description:
+          type: string
+          example: Grand nid de poule sur la route
+        category:
+          type: string
+          example: INFRASTRUCTURE
+        locationText:
+          type: string
+          example: Avenue Kennedy
+        photoUrl:
+          type: string
+          example: https://example.com/photo.jpg
+        moderationStatus:
+          type: string
+          example: PENDING
+        reportStatus:
+          type: string
+          example: OPEN
+        rejectionReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        reviewedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CategoryRequest:
+      required:
+        - name
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Road"
+          maxLength: 50
+          minLength: 2
+        color:
+          type: string
+          example: "#FFD700"
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Hex color code (optional, random if not provided)
+
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Road"
+          maxLength: 255
+        color:
+          type: string
+          example: "#FF5733"
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Hex color code (e.g., #FF5733)
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-10T10:30:00Z"
+        createdBy:
+          type: string
+          example: "user@email.com"
+          description: ID of the creator
+
+    MediaResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+        type:
+          type: string
+        mimeType:
+          type: string
+        url:
+          type: string
+        originalName:
+          type: string
+        fileSize:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        message:
+          type: string
