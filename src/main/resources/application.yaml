@@ -34,3 +34,6 @@ storage:
   local:
     path: ${STORAGE_LOCAL_PATH:./uploads}
     base-url: /uploads
+  admin:
+    email: admin@dschang.com
+    password: admin
