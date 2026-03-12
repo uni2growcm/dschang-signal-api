@@ -133,12 +133,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                timestamp: "2026-03-10T07:00:00.000Z"
-                status: 404
-                error: Not Found
-                message: L'utilisateur avec l'ID 4 n'existe pas.
-                path: /api/users/4
         '500':
           description: Internal server error
           content:
@@ -148,7 +142,7 @@ paths:
 
   /users/{id}/role:
     patch:
-      operationId: changeUserRole
+      operationId: changeUserRoleAdmin
       tags: [ User ]
       summary: Change a user's role (Admin only)
       parameters:
@@ -276,8 +270,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CategoryRequest'
       responses:
-        '201':
-          description: Category created successfully
+        '200':
+          description: JWT token
           content:
             application/json:
               schema:
@@ -367,21 +361,17 @@ components:
     X-Total-Count:
       schema:
         type: integer
-      description: Total amount of elements for this query
     X-Page-Number:
       schema:
         type: integer
-      description: Page number starting from 0
     X-Page-Size:
       schema:
         type: integer
-      description: Page size
 
   parameters:
     Page:
       name: page
       in: query
-      description: Page number
       required: false
       schema:
         type: integer
@@ -390,7 +380,6 @@ components:
     Size:
       name: size
       in: query
-      description: Number of items per page
       required: false
       schema:
         type: integer
@@ -399,7 +388,6 @@ components:
     Sort:
       name: sort
       in: query
-      description: 'Sorting criteria (example: fullName)'
       required: false
       schema:
         type: string
@@ -524,7 +512,7 @@ components:
           example: https://example.com/photo.jpg
         moderationStatus:
           type: string
-          example: PENDING
+          example: PENDING_REVIEW
         reportStatus:
           type: string
           example: OPEN
@@ -555,7 +543,6 @@ components:
           type: string
           example: "#FFD700"
           pattern: '^#[0-9A-Fa-f]{6}$'
-          description: Hex color code (optional, random if not provided)
 
     CategoryResponse:
       type: object
@@ -571,7 +558,6 @@ components:
           type: string
           example: "#FF5733"
           pattern: '^#[0-9A-Fa-f]{6}$'
-          description: Hex color code (e.g., #FF5733)
         createdAt:
           type: string
           format: date-time
@@ -579,7 +565,6 @@ components:
         createdBy:
           type: string
           example: "user@email.com"
-          description: ID of the creator
 
     MediaResponse:
       type: object
