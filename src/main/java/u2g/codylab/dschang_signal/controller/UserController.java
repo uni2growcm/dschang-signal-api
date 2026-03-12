@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -38,8 +39,8 @@ public class UserController implements UserApi {
     }
 
     @Override
-    public ResponseEntity<UserApiDTO> changeUserRole(@PathVariable("id") Long id,
-                                                     @RequestBody ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
+    public ResponseEntity<UserApiDTO> changeUserRoleAdmin(@PathVariable("id") Long id,
+                                                          @Valid @RequestBody ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
         return ResponseEntity.ok(userService.changeUserRole(id, changeRoleRequestApiDTO));
     }
 }
