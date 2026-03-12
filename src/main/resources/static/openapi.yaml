@@ -180,6 +180,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /reports/public:
+    get:
+      operationId: getPublicReports
+      tags: [ Report ]
+      summary: Get all validated reports
+      security: [ ]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: created_at
+      responses:
+        '200':
+          description: List of validated reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Report'
+
   /reports/{id}:
     get:
       operationId: getReportById
@@ -479,6 +511,8 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+
 
     CategoryRequest:
       required:
