@@ -491,6 +491,10 @@ components:
         updatedAt:
           type: string
           format: date-time
+        createdBy:
+          type: integer
+          format: int64
+          example: 5
 
     CategoryRequest:
       required:
@@ -527,9 +531,8 @@ components:
           type: string
           format: date-time
           example: "2026-03-10T10:30:00Z"
-        createdBy:
-          type: string
-          example: "user@email.com"
+        created_by:
+          type: integer
           description: ID of the creator
 
     MediaResponse:
