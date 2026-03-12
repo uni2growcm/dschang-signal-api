@@ -41,7 +41,7 @@
         	<dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-docker-compose</artifactId>
-            </dependency>
+            </dependency> 
 
 		<dependency>
 			<groupId>org.postgresql</groupId>

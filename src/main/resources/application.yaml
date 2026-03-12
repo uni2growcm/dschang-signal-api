@@ -11,7 +11,19 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 100MB
+  web:
+    resources:
+      static-locations: file:${STORAGE_LOCAL_PATH:./uploads}/
 
 server:
   base-path: /api
 
+storage:
+  local:
+    path: ${STORAGE_LOCAL_PATH:./uploads}
+    base-url: /uploads

@@ -243,17 +243,73 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Unauthorized - missing or invalid token
+          description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
+        '409':
+          description: Duplicate input
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /media:
+    post:
+      operationId: uploadMedia
+      tags: [ Media ]
+      summary: Upload a media file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [ file ]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Media uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaResponse'
+
+    get:
+      operationId: getAllMedia
+      tags: [ Media ]
+      summary: Get all media files
+      responses:
+        '200':
+          description: List of media files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaResponse'
+
+  /media/{mediaId}:
+      delete:
+        operationId: deleteMedia
+        tags: [ Media ]
+        summary: Delete a media file
+        parameters:
+          - name: mediaId
+            in: path
+            required: true
+            schema:
+              type: integer
+        responses:
+          '204':
+            description: Media deleted successfully
+
 
 components:
   securitySchemes:
@@ -261,6 +317,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
   headers:
     X-Total-Count:
       schema:
@@ -460,6 +517,30 @@ components:
           type: string
           example: "user@email.com"
 
+    MediaResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+        type:
+          type: string
+        mimeType:
+          type: string
+        url:
+          type: string
+        originalName:
+          type: string
+        fileSize:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
     ErrorResponse:
       type: object
       properties:
@@ -468,9 +549,5 @@ components:
           format: date-time
         status:
           type: integer
-        error:
-          type: string
         message:
-          type: string
-        path:
           type: string
