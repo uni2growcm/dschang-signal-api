@@ -8,6 +8,9 @@ import u2g.codylab.dschang_signal.dto.LoginRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.RegisterRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.Role;
 import u2g.codylab.dschang_signal.entity.User;
+import u2g.codylab.dschang_signal.exception.BadRequestException;
+import u2g.codylab.dschang_signal.exception.ConflictException;
+import u2g.codylab.dschang_signal.exception.UnauthorizedException;
 import u2g.codylab.dschang_signal.repository.UserRepository;
 
 import java.sql.Timestamp;
@@ -29,7 +32,7 @@ public class AuthService {
     public void register(RegisterRequestApiDTO dto) {
         log.info("Registering user: {}", dto.getEmail());
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already in use: " + dto.getEmail());
+            throw new ConflictException("Email already in use: " + dto.getEmail());
         }
         User user = new User();
         user.setEmail(dto.getEmail());
@@ -46,9 +49,9 @@ public class AuthService {
     public User login(LoginRequestApiDTO dto) {
         log.info("Login attempt for: {}", dto.getEmail());
         User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new BadRequestException("Invalid credentials"));
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new UnauthorizedException("Invalid credentials");
         }
         return user;
     }

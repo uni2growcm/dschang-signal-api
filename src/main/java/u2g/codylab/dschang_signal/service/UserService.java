@@ -1,6 +1,9 @@
 package u2g.codylab.dschang_signal.service;
 
+
 import u2g.codylab.dschang_signal.dto.UserApiDTO;
+import u2g.codylab.dschang_signal.entity.User;
+import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.mapper.UserMapper;
 import u2g.codylab.dschang_signal.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -24,9 +27,21 @@ public class UserService {
 
     public Page<UserApiDTO> getAllUsers(Pageable pageable) {
         log.debug("Request to get all Users");
-        Page<UserApiDTO> dtos = userRepository.findAll(pageable)
-                .map(userMapper::toUserDTO);
-        log.debug("Request to get all Users : {}", dtos.getContent().size());
-        return dtos;
+        try {
+            Page<UserApiDTO> dtos = userRepository.findAll(pageable)
+                    .map(userMapper::toUserDTO);
+            log.debug("Found {} users", dtos.getContent().size());
+            return dtos;
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid pagination parameters");
+        }
+    }
+
+    public UserApiDTO getUserById(Long id) {
+        log.debug("Request to etch user y id");
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("L'utilisateur avec l'ID " + id + " n'existe pas."));
+        log.debug("User with id {} ound", user.getId());
+        return userMapper.toUserDTO(user);
     }
 }
