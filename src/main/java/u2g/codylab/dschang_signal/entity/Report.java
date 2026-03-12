@@ -2,7 +2,7 @@ package u2g.codylab.dschang_signal.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.sql.Timestamp;
+import java.time.OffsetDateTime;
 
 @Data
 @Entity
@@ -35,14 +35,25 @@ public class Report {
     private String reportStatus;
 
     @Column(name = "rejection_reason")
-    private  String rejectionReason;
+    private String rejectionReason;
 
     @Column(updatable = false, nullable = false)
-    private Timestamp createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "reviewed_at")
-    private Timestamp reviewedAt;
+    private OffsetDateTime reviewedAt;
 
-    @Column(updatable = true, nullable = false)
-    private Timestamp updatedAt;
+    @Column(nullable = false)
+    private OffsetDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
 }

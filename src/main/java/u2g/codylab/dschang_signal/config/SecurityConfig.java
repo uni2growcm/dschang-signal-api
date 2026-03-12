@@ -3,6 +3,7 @@ package u2g.codylab.dschang_signal.config;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -46,6 +47,8 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/login", "/api/register").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/*/role").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/reports/*/status").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .logout(logout -> logout
