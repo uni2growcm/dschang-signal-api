@@ -14,7 +14,6 @@ CREATE TABLE reports (
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     location_text VARCHAR(255),
-    photo_url VARCHAR(500),
     moderation_status VARCHAR(50) NOT NULL,
     report_status VARCHAR(50),
     rejection_reason TEXT,
