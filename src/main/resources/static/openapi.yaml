@@ -341,6 +341,25 @@ paths:
         responses:
           '204':
             description: Media deleted successfully
+      get:
+        operationId: getMediaById
+        tags: [ Media ]
+        summary: Get a media file URL by id
+        parameters:
+          - name: mediaId
+            in: path
+            required: true
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: Media file found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/MediaResponse'
+          '404':
+            description: Media not found
 
 
 components:

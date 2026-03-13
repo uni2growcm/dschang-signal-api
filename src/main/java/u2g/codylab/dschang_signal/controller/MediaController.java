@@ -31,6 +31,11 @@ public class MediaController implements MediaApi {
         return ResponseEntity.ok(mediaService.getAllMedias());
     }
 
+    @Override
+    public ResponseEntity<MediaResponseApiDTO> getMediaById(Integer mediaId) {
+        return ResponseEntity.ok(mediaService.getById(mediaId));
+    }
+
 
     @Override
     public ResponseEntity<Void> deleteMedia(Integer mediaId) {

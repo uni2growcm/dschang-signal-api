@@ -56,6 +56,13 @@ public class MediaService {
                 .stream().map(mediaMapper::toMediaDTO).toList();
     }
 
+    public MediaResponseApiDTO getById(Integer mediaId) {
+        Media media = mediaRepository.findById(mediaId.longValue())
+                .orElseThrow(() -> new BadRequestException(
+                        "Media with id " + mediaId + " not found"));
+        return mediaMapper.toMediaDTO(media);
+    }
+
 
     public void delete(Integer mediaId) {
         Media media = mediaRepository.findById(mediaId.longValue())
