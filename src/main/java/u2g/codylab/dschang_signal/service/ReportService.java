@@ -1,11 +1,11 @@
 package u2g.codylab.dschang_signal.service;
 
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdateReportStatusRequestApiDTO;
@@ -17,7 +17,6 @@ import u2g.codylab.dschang_signal.repository.ReportRepository;
 import java.time.OffsetDateTime;
 
 @Slf4j
-@Transactional
 @Service
 public class ReportService {
 
@@ -29,6 +28,7 @@ public class ReportService {
         this.reportMapper = reportMapper;
     }
 
+    @Transactional(readOnly = true)
     public ReportApiDTO getReportById(Long id) {
         log.debug("Request to fetch report by id {}", id);
         Report report = reportRepository.findById(id)
@@ -39,12 +39,14 @@ public class ReportService {
         return reportMapper.toReportDTO(report);
     }
 
+    @Transactional(readOnly = true)
     public Page<ReportApiDTO> getPublicReports(Pageable pageable) {
         log.debug("Request to fetch public (RESOLVED) reports");
         return reportRepository.findByModerationStatus(ModerationStatus.RESOLVED, pageable)
                 .map(reportMapper::toReportDTO);
     }
 
+    @Transactional
     public ReportApiDTO updateReportStatus(Long id, UpdateReportStatusRequestApiDTO request) {
         log.debug("Request to update status of report with id {}", id);
 
@@ -55,7 +57,6 @@ public class ReportService {
 
         ModerationStatus currentStatus = report.getModerationStatus();
         ModerationStatus newStatus = ModerationStatus.valueOf(request.getStatus().getValue());
-
 
         if (currentStatus == ModerationStatus.RESOLVED && newStatus == ModerationStatus.PENDING) {
             throw new ResponseStatusException(
@@ -70,7 +71,6 @@ public class ReportService {
             );
         }
 
-
         if (newStatus == ModerationStatus.REJECTED) {
             if (request.getRejectionReason() == null || request.getRejectionReason().isBlank()) {
                 throw new ResponseStatusException(
@@ -82,7 +82,6 @@ public class ReportService {
         } else {
             report.setRejectionReason(null);
         }
-
 
         report.setModerationStatus(newStatus);
         report.setReviewedAt(OffsetDateTime.now());

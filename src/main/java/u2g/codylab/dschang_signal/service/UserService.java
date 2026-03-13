@@ -9,14 +9,13 @@ import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.mapper.UserMapper;
 import u2g.codylab.dschang_signal.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
-@Transactional
 @Service
 public class UserService {
 
@@ -28,6 +27,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    @Transactional(readOnly = true)
     public Page<UserApiDTO> getAllUsers(Pageable pageable) {
         log.debug("Request to get all Users");
         try {
@@ -40,6 +40,7 @@ public class UserService {
         }
     }
 
+    @Transactional(readOnly = true)
     public UserApiDTO getUserById(Long id) {
         log.debug("Request to fetch user by id");
         User user = userRepository.findById(id)
@@ -48,6 +49,7 @@ public class UserService {
         return userMapper.toUserDTO(user);
     }
 
+    @Transactional
     public UserApiDTO changeUserRole(Long id, ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
         log.debug("Request to change role of user with id {}", id);
         User user = userRepository.findById(id)

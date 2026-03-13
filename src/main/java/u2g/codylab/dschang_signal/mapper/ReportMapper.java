@@ -3,14 +3,30 @@ package u2g.codylab.dschang_signal.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.mapstruct.Named;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
+import u2g.codylab.dschang_signal.entity.Category;
 import u2g.codylab.dschang_signal.entity.Report;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {CategoryMapper.class, UserMapper.class})
 public interface ReportMapper {
 
+    @Mapping(source = "categories", target = "categories")
+    @Mapping(target = "category", expression = "java(mapFirstCategoryName(report.getCategories()))")
+    @Mapping(source = "createdBy", target = "createdBy")
     ReportApiDTO toReportDTO(Report report);
 
     @Mapping(target = "moderationStatus", ignore = true)
+    @Mapping(target = "categories", ignore = true)
     Report toEntity(ReportApiDTO reportApiDTO);
+
+    default String mapFirstCategoryName(Set<Category> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return null;
+        }
+        return categories.iterator().next().getName();
+    }
 }

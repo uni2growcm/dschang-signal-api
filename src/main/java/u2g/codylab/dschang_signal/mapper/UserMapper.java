@@ -12,7 +12,6 @@ import java.time.OffsetDateTime;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface UserMapper {
-
     @Mapping(target = "password", ignore = true)
     @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "timestampToOffsetDateTime")
     @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "timestampToOffsetDateTime")
@@ -20,6 +19,9 @@ public interface UserMapper {
 
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "reports", ignore = true)
+    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "media", ignore = true)
     User toEntity(UserApiDTO user);
 
     @Named("timestampToOffsetDateTime")

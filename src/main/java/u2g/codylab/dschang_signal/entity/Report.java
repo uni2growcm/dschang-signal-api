@@ -3,11 +3,14 @@ package u2g.codylab.dschang_signal.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
 @Table(name = "reports")
 public class Report {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -18,8 +21,14 @@ public class Report {
     @Column(nullable = false)
     private String description;
 
-    @Column(nullable = false)
-    private String category;
+    // Relation Many-to-Many avec Category (via la table report_category)
+    @ManyToMany
+    @JoinTable(
+            name = "report_category",
+            joinColumns = @JoinColumn(name = "report_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private Set<Category> categories = new HashSet<>();
 
     @Column(name = "location_text")
     private String locationText;
@@ -45,6 +54,11 @@ public class Report {
 
     @Column(nullable = false)
     private OffsetDateTime updatedAt;
+
+    // Relation Many-to-One avec User (créateur du report)
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private User createdBy;
 
     @PrePersist
     protected void onCreate() {
