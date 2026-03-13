@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 import u2g.codylab.dschang_signal.api.ReportApi;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 
-import u2g.codylab.dschang_signal.dto.UserApiDTO;
 import u2g.codylab.dschang_signal.service.ReportService;
 
 import java.util.List;

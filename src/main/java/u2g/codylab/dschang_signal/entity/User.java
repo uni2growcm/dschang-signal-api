@@ -1,7 +1,9 @@
 package u2g.codylab.dschang_signal.entity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 @Entity
@@ -33,4 +35,15 @@ public class User {
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "createdBy")
+    private List<Report> reports;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "createdBy")
+    private List<Category> category;
+
+    @OneToMany(mappedBy = "createdBy")
+    private List<Media> media;
 }
