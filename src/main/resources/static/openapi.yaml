@@ -133,12 +133,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                timestamp: "2026-03-10T07:00:00.000Z"
-                status: 404
-                error: Not Found
-                message: L'utilisateur avec l'ID 4 n'existe pas.
-                path: /api/users/4
         '500':
           description: Internal server error
           content:
@@ -185,6 +179,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/public:
+    get:
+      operationId: getPublicReports
+      tags: [ Report ]
+      summary: Get all validated reports
+      security: [ ]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: created_at
+      responses:
+        '200':
+          description: List of validated reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Report'
 
   /reports/{id}:
     get:
@@ -464,18 +490,12 @@ components:
         description:
           type: string
           example: Grand nid de poule sur la route
-        category:
-          type: string
-          example: INFRASTRUCTURE
         locationText:
           type: string
           example: Avenue Kennedy
-        photoUrl:
-          type: string
-          example: https://example.com/photo.jpg
         moderationStatus:
           type: string
-          example: PENDING
+          example: PENDING_REVIEW
         reportStatus:
           type: string
           example: OPEN
@@ -491,10 +511,17 @@ components:
         updatedAt:
           type: string
           format: date-time
+        createdBy:
+          $ref: "#/components/schemas/User"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryResponse"
 
     CategoryRequest:
       required:
         - name
+        - createdBy
       type: object
       properties:
         name:
@@ -507,6 +534,8 @@ components:
           example: "#FFD700"
           pattern: '^#[0-9A-Fa-f]{6}$'
           description: Hex color code (optional, random if not provided)
+        createdBy:
+          $ref: '#/components/schemas/User'
 
     CategoryResponse:
       type: object
@@ -523,14 +552,13 @@ components:
           example: "#FF5733"
           pattern: '^#[0-9A-Fa-f]{6}$'
           description: Hex color code (e.g., #FF5733)
+          maxLength: 10
         createdAt:
           type: string
           format: date-time
           example: "2026-03-10T10:30:00Z"
         createdBy:
-          type: string
-          example: "user@email.com"
-          description: ID of the creator
+          $ref: '#/components/schemas/User'
 
     MediaResponse:
       type: object
