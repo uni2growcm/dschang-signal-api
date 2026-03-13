@@ -31,17 +31,18 @@ public class ReportService {
         log.debug("Request to fetch report by id {}", id);
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Le rapport avec l'ID " + id + " n'existe pas."
+                        HttpStatus.NOT_FOUND, "Report with id " + id + " not found!"
                 ));
         log.debug("Report with id {} found", id);
         return reportMapper.toReportDTO(report);
     }
 
     public Page<ReportApiDTO> getPublicReports(Pageable pageable){
-
+        log.debug("Request to fetch all reports by page {}", pageable);
         try {
             Page<ReportApiDTO> dtos = reportRepository.findByModerationStatus(ModerationStatus.RESOLVED,pageable)
                     .map(reportMapper::toReportDTO);
+            log.debug("Found {} reports by page {}", dtos.getTotalElements(), pageable);
             return dtos;
         } catch (Exception e) {
             throw new BadRequestException("Invalid pagination parameters");
