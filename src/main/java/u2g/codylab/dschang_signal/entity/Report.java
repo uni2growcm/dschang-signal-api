@@ -1,13 +1,20 @@
 package u2g.codylab.dschang_signal.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import java.sql.Timestamp;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "reports")
 public class Report {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -18,14 +25,8 @@ public class Report {
     @Column(nullable = false)
     private String description;
 
-    @Column(nullable = false)
-    private String category;
-
     @Column(name = "location_text")
     private String locationText;
-
-    @Column(name = "photo_url")
-    private String photoUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "moderation_status", nullable = false)
@@ -45,4 +46,19 @@ public class Report {
 
     @Column(updatable = true, nullable = false)
     private Timestamp updatedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
+    @OneToMany(mappedBy = "report")
+    private List<Media> media;
+
+    @ManyToMany
+    @JoinTable(
+            name = "report_category",
+            joinColumns = @JoinColumn(name = "report_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private Set<Category> categories = new HashSet<>();
 }
