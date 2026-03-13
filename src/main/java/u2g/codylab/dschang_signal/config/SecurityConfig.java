@@ -58,7 +58,7 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(basePath + "/login", basePath + "/register").permitAll()
+                        .requestMatchers(basePath + "/login", basePath + "/register", basePath + "/reports/public").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )

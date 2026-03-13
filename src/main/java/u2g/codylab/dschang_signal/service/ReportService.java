@@ -16,6 +16,7 @@ import u2g.codylab.dschang_signal.repository.ReportRepository;
 
 @Slf4j
 @Service
+@Transactional
 public class ReportService {
 
     private final ReportRepository reportRepository;
@@ -40,7 +41,7 @@ public class ReportService {
     public Page<ReportApiDTO> getPublicReports(Pageable pageable){
         log.debug("Request to fetch all reports by page {}", pageable);
         try {
-            Page<ReportApiDTO> dtos = reportRepository.findByModerationStatus(ModerationStatus.RESOLVED,pageable)
+            Page<ReportApiDTO> dtos = reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED,pageable)
                     .map(reportMapper::toReportDTO);
             log.debug("Found {} reports by page {}", dtos.getTotalElements(), pageable);
             return dtos;
@@ -49,6 +50,7 @@ public class ReportService {
         }
     }
 
+    @Transactional(readOnly = true)
     public Page<ReportApiDTO> getAllReports(Pageable pageable) {
         log.debug("Request to get all reports");
         try {

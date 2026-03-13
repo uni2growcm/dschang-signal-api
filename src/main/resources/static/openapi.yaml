@@ -602,7 +602,7 @@ components:
           example: "Kennedy Avenue, in front of the university"
         moderationStatus:
           type: string
-          enum: [ PENDING, ACCEPTED, REJECTED ]
+          enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
           example: "PENDING_REVIEW"
         reportStatus:
           type: string

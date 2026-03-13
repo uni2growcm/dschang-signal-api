@@ -32,8 +32,9 @@ public class Report {
     @Column(name = "moderation_status", nullable = false)
     private ModerationStatus moderationStatus;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "report_status")
-    private String reportStatus;
+    private ReportStatus reportStatus;
 
     @Column(name = "rejection_reason")
     private  String rejectionReason;
