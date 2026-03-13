@@ -485,6 +485,10 @@ components:
           type: string
           enum: [ PENDING, RESOLVED, REJECTED ]
           example: RESOLVED
+        rejectionReason:
+          type: string
+          example: "Reporting outside area of jurisdiction"
+          description: Obligatoire si le statut est REJECTED
 
     User:
       type: object
@@ -544,7 +548,7 @@ components:
           example: https://example.com/photo.jpg
         moderationStatus:
           type: string
-          example: PENDING_REVIEW
+          example: PENDING
         reportStatus:
           type: string
           example: OPEN
@@ -560,8 +564,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-
-
 
     CategoryRequest:
       required:

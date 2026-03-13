@@ -11,13 +11,10 @@ import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdateReportStatusRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.entity.Report;
-import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.mapper.ReportMapper;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
+
 import java.time.OffsetDateTime;
-
-
-import java.util.List;
 
 @Slf4j
 @Transactional
@@ -36,38 +33,63 @@ public class ReportService {
         log.debug("Request to fetch report by id {}", id);
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "The report which " + id + " does not exist."
+                        HttpStatus.NOT_FOUND, "The report with id " + id + " does not exist."
                 ));
         log.debug("Report with id {} found", id);
         return reportMapper.toReportDTO(report);
     }
 
+    public Page<ReportApiDTO> getPublicReports(Pageable pageable) {
+        log.debug("Request to fetch public (RESOLVED) reports");
+        return reportRepository.findByModerationStatus(ModerationStatus.RESOLVED, pageable)
+                .map(reportMapper::toReportDTO);
+    }
+
     public ReportApiDTO updateReportStatus(Long id, UpdateReportStatusRequestApiDTO request) {
         log.debug("Request to update status of report with id {}", id);
+
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "The report with id " + id + " does not exist."
                 ));
-        report.setModerationStatus(ModerationStatus.valueOf(request.getStatus().getValue()));
+
+        ModerationStatus currentStatus = report.getModerationStatus();
+        ModerationStatus newStatus = ModerationStatus.valueOf(request.getStatus().getValue());
+
+
+        if (currentStatus == ModerationStatus.RESOLVED && newStatus == ModerationStatus.PENDING) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid status transition: cannot move from RESOLVED back to PENDING."
+            );
+        }
+        if (currentStatus == ModerationStatus.REJECTED && newStatus == ModerationStatus.PENDING) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid status transition: cannot move from REJECTED back to PENDING."
+            );
+        }
+
+
+        if (newStatus == ModerationStatus.REJECTED) {
+            if (request.getRejectionReason() == null || request.getRejectionReason().isBlank()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "A rejection reason is required when rejecting a report."
+                );
+            }
+            report.setRejectionReason(request.getRejectionReason());
+        } else {
+            report.setRejectionReason(null);
+        }
+
+
+        report.setModerationStatus(newStatus);
         report.setReviewedAt(OffsetDateTime.now());
         report.setUpdatedAt(OffsetDateTime.now());
+
         Report updated = reportRepository.save(report);
         log.debug("Report with id {} status updated to {}", id, updated.getModerationStatus());
         return reportMapper.toReportDTO(updated);
     }
-
-    public Page<ReportApiDTO> getPublicReports(Pageable pageable){
-
-        try {
-            Page<ReportApiDTO> dtos = reportRepository.findByModerationStatus(ModerationStatus.RESOLVED,pageable)
-                    .map(reportMapper::toReportDTO);
-            return dtos;
-        } catch (Exception e) {
-            throw new BadRequestException("Invalid pagination parameters");
-        }
-
-
-    }
-
-
 }
