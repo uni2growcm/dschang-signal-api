@@ -383,7 +383,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
+            enum: [ PENDING_REVIEW, RESOLVED, REJECTED ]
         - name: reportStatus
           in: query
           description: Filter by report status
@@ -602,7 +602,7 @@ components:
           example: "Kennedy Avenue, in front of the university"
         moderationStatus:
           type: string
-          enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
+          enum: [ PENDING_REVIEW, RESOLVED, REJECTED ]
           example: "PENDING_REVIEW"
         reportStatus:
           type: string

@@ -41,7 +41,7 @@ public class ReportService {
     public Page<ReportApiDTO> getPublicReports(Pageable pageable){
         log.debug("Request to fetch all reports by page {}", pageable);
         try {
-            Page<ReportApiDTO> dtos = reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED,pageable)
+            Page<ReportApiDTO> dtos = reportRepository.findByModerationStatus(ModerationStatus.RESOLVED,pageable)
                     .map(reportMapper::toReportDTO);
             log.debug("Found {} reports by page {}", dtos.getTotalElements(), pageable);
             return dtos;
