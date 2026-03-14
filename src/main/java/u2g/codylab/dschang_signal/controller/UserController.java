@@ -41,7 +41,7 @@ public class UserController implements UserApi {
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserApiDTO> changeUserRole(@PathVariable("id") Long id,
+    public ResponseEntity<UserApiDTO> changeUserRoleAdmin(@PathVariable("id") Long id,
                                                           @Valid @RequestBody ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
         return ResponseEntity.ok(userService.changeUserRole(id, changeRoleRequestApiDTO));
     }
