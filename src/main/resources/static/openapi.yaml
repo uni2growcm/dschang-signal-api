@@ -343,6 +343,113 @@ paths:
             description: Media deleted successfully
 
 
+  /reports/admin:
+    get:
+      tags: [ Report ]
+      summary: Get all reports (Admin only)
+      description: Retrieve all reports in the system with pagination and filtering.
+      operationId: getAllReports
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: page
+          in: query
+          description: Page number (zero-based)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: 'Sort by field and direction'
+          required: false
+          schema:
+            type: string
+            default: 'reportStatus'
+            example: 'createdAt,desc'
+        - name: moderationStatus
+          in: query
+          description: Filter by moderation status
+          required: false
+          schema:
+            type: string
+            enum: [ PENDING_REVIEW, RESOLVED, REJECTED ]
+        - name: reportStatus
+          in: query
+          description: Filter by report status
+          required: false
+          schema:
+            type: string
+            enum: [ PENDING, IN_PROGRESS, RESOLVED ]
+        - name: category
+          in: query
+          description: Filter by category
+          required: false
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          description: Filter reports created after this date (ISO format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: toDate
+          in: query
+          description: Filter reports created before this date (ISO format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successful operation
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of elements
+            X-Page-Number:
+              schema:
+                type: integer
+              description: Current page number
+            X-Page-Size:
+              schema:
+                type: integer
+              description: Number of items per page
+            X-Total-Pages:
+              schema:
+                type: integer
+              description: Total number of pages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Report'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -486,31 +593,37 @@ components:
           example: 1
         title:
           type: string
-          example: Nid de poule
+          example: "Pothole on Kennedy Avenue"
         description:
           type: string
-          example: Grand nid de poule sur la route
+          example: "Large dangerous pothole on the roadway"
         locationText:
           type: string
-          example: Avenue Kennedy
+          example: "Kennedy Avenue, in front of the university"
         moderationStatus:
           type: string
-          example: PENDING_REVIEW
+          enum: [ PENDING_REVIEW, RESOLVED, REJECTED ]
+          example: "PENDING_REVIEW"
         reportStatus:
           type: string
-          example: OPEN
+          enum: [ PENDING, IN_PROGRESS, RESOLVED ]
+          example: "PENDING"
         rejectionReason:
           type: string
+          example: "Area not covered by municipality"
         createdAt:
           type: string
           format: date-time
           readOnly: true
+          example: "2026-03-10T14:30:00Z"
         reviewedAt:
           type: string
           format: date-time
+          example: "2026-03-11T09:15:00Z"
         updatedAt:
           type: string
           format: date-time
+          example: "2026-03-10T14:30:00Z"
         createdBy:
           $ref: "#/components/schemas/User"
         categories:
