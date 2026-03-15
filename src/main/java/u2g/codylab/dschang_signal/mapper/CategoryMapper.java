@@ -16,10 +16,12 @@ public interface CategoryMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "reports", ignore = true)
     Category toEntity(CategoryRequestApiDTO categoryRequestApiDTO);
 
     @Mapping(target = "createdAt", expression = "java(timestampToOffsetDateTime(category.getCreatedAt()))")
+    @Mapping(target = "createdBy", ignore = true)
     CategoryResponseApiDTO toCategoryDto(Category category);
 
     default OffsetDateTime timestampToOffsetDateTime(Timestamp timestamp) {

@@ -302,8 +302,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CategoryRequest'
       responses:
-        '201':
-          description: Category created successfully
+        '200':
+          description: JWT token
           content:
             application/json:
               schema:
@@ -382,7 +382,6 @@ paths:
         '204':
           description: Media deleted successfully
 
-
 components:
   securitySchemes:
     bearerAuth:
@@ -394,21 +393,17 @@ components:
     X-Total-Count:
       schema:
         type: integer
-      description: Total amount of elements for this query
     X-Page-Number:
       schema:
         type: integer
-      description: Page number starting from 0
     X-Page-Size:
       schema:
         type: integer
-      description: Page size
 
   parameters:
     Page:
       name: page
       in: query
-      description: Page number
       required: false
       schema:
         type: integer
@@ -417,7 +412,6 @@ components:
     Size:
       name: size
       in: query
-      description: Number of items per page
       required: false
       schema:
         type: integer
@@ -426,7 +420,6 @@ components:
     Sort:
       name: sort
       in: query
-      description: 'Sorting criteria (example: fullName)'
       required: false
       schema:
         type: string
@@ -571,17 +564,10 @@ components:
         updatedAt:
           type: string
           format: date-time
-        createdBy:
-          $ref: "#/components/schemas/User"
-        categories:
-          type: array
-          items:
-            $ref: "#/components/schemas/CategoryResponse"
 
     CategoryRequest:
       required:
         - name
-        - createdBy
       type: object
       properties:
         name:
@@ -593,9 +579,6 @@ components:
           type: string
           example: "#FFD700"
           pattern: '^#[0-9A-Fa-f]{6}$'
-          description: Hex color code (optional, random if not provided)
-        createdBy:
-          $ref: '#/components/schemas/User'
 
     CategoryResponse:
       type: object
@@ -611,14 +594,13 @@ components:
           type: string
           example: "#FF5733"
           pattern: '^#[0-9A-Fa-f]{6}$'
-          description: Hex color code (e.g., #FF5733)
-          maxLength: 10
         createdAt:
           type: string
           format: date-time
           example: "2026-03-10T10:30:00Z"
         createdBy:
-          $ref: '#/components/schemas/User'
+          type: string
+          example: "user@email.com"
 
     MediaResponse:
       type: object

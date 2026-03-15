@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,13 +33,8 @@ public class ReportController implements ReportApi {
     }
 
     @Override
-    public ResponseEntity<List<ReportApiDTO>> getPublicReports(
-            Integer page,
-            Integer size,
-            String sort
-    ) {
+    public ResponseEntity<List<ReportApiDTO>> getPublicReports(Integer page, Integer size, String sort) {
         String sortField = "created_at".equals(sort) ? "createdAt" : sort != null ? sort : "createdAt";
-
         Pageable pageable = PageRequest.of(
                 page != null ? page : 0,
                 size != null ? size : 20,
@@ -49,8 +45,10 @@ public class ReportController implements ReportApi {
     }
 
     @Override
-    public ResponseEntity<ReportApiDTO> updateReportStatus(@PathVariable("id") Long id,
-                                                           @Valid @RequestBody UpdateReportStatusRequestApiDTO request) {
-        return ResponseEntity.ok(reportService.updateReportStatus(id, request));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ReportApiDTO> updateReportStatus(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody UpdateReportStatusRequestApiDTO updateReportStatusRequestApiDTO) {
+        return ResponseEntity.ok(reportService.updateReportStatus(id, updateReportStatusRequestApiDTO));
     }
 }
