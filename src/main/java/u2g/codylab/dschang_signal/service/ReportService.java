@@ -11,6 +11,7 @@ import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdateReportStatusRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.entity.Report;
+import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.mapper.ReportMapper;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
 
@@ -18,6 +19,7 @@ import java.time.OffsetDateTime;
 
 @Slf4j
 @Service
+@Transactional
 public class ReportService {
 
     private final ReportRepository reportRepository;
@@ -68,6 +70,13 @@ public class ReportService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Invalid status transition: cannot move from REJECTED back to PENDING."
+            );
+        }
+
+        if (currentStatus == ModerationStatus.REJECTED && newStatus == ModerationStatus.RESOLVED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid status transition: cannot move from REJECTED back to RESOLVED."
             );
         }
 
