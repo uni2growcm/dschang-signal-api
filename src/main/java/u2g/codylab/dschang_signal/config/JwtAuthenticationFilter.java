@@ -57,7 +57,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String email = jwtService.extractEmail(jwt);
+        String email = null;
+        try {
+            email = jwtService.extractEmail(jwt);
+        } catch (Exception e) {
+            log.debug("Invalid JWT token: {}", e.getMessage());
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
