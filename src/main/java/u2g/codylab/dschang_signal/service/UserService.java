@@ -7,6 +7,7 @@ import u2g.codylab.dschang_signal.dto.UserApiDTO;
 import u2g.codylab.dschang_signal.entity.Role;
 import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.exception.BadRequestException;
+import u2g.codylab.dschang_signal.exception.NotFoundException;
 import u2g.codylab.dschang_signal.mapper.UserMapper;
 import u2g.codylab.dschang_signal.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -58,5 +59,13 @@ public class UserService {
         User updatedUser = userRepository.save(user);
         log.debug("Role of user with id {} changed to {}", id, updatedUser.getRole());
         return userMapper.toUserDTO(updatedUser);
+    }
+
+    public UserApiDTO getUserByEmail(String email) {
+        log.debug("Request to fetch user by email: {}", email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
+        log.debug("User with email {} found", user.getEmail());
+        return userMapper.toUserDTO(user);
     }
 }

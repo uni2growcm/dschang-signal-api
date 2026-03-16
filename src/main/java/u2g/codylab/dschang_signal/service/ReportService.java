@@ -10,6 +10,8 @@ import org.springframework.web.server.ResponseStatusException;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.entity.Report;
+import u2g.codylab.dschang_signal.entity.ReportStatus;
+import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.mapper.ReportMapper;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
@@ -38,10 +40,10 @@ public class ReportService {
         return reportMapper.toReportDTO(report);
     }
 
-    public Page<ReportApiDTO> getPublicReports(Pageable pageable){
+    public Page<ReportApiDTO> getPublicReports(Pageable pageable) {
         log.debug("Request to fetch all reports by page {}", pageable);
         try {
-            Page<ReportApiDTO> dtos = reportRepository.findByModerationStatus(ModerationStatus.RESOLVED,pageable)
+            Page<ReportApiDTO> dtos = reportRepository.findByModerationStatus(ModerationStatus.RESOLVED, pageable)
                     .map(reportMapper::toReportDTO);
             log.debug("Found {} reports by page {}", dtos.getTotalElements(), pageable);
             return dtos;
@@ -65,4 +67,23 @@ public class ReportService {
         }
     }
 
+
+    @Transactional
+    public void deleteReport(Long reportId, User currentUser) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Report not found"
+                ));
+        if (!report.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Only the author can delete this report");
+        }
+
+        if (!report.getReportStatus().equals(ReportStatus.PENDING)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Report cannot be deleted because its status is not PENDING");
+        }
+
+        reportRepository.delete(report);
+    }
 }

@@ -1,6 +1,15 @@
 package u2g.codylab.dschang_signal.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import u2g.codylab.dschang_signal.api.UserApi;
+import u2g.codylab.dschang_signal.dto.ChangeRoleRequestApiDTO;
+import u2g.codylab.dschang_signal.dto.UserApiDTO;
+import u2g.codylab.dschang_signal.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,8 +50,14 @@ public class UserController implements UserApi {
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserApiDTO> changeUserRole(@PathVariable("id") Long id,
-                                                          @Valid @RequestBody ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
+    public ResponseEntity<UserApiDTO> changeUserRole(@PathVariable("id") Long id, @Valid @RequestBody ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
         return ResponseEntity.ok(userService.changeUserRole(id, changeRoleRequestApiDTO));
+    }
+
+    @Override
+    public ResponseEntity<UserApiDTO> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return ResponseEntity.ok(userService.getUserByEmail(email));
     }
 }
