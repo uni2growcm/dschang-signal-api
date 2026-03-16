@@ -22,8 +22,8 @@ public class CategoryController implements CategoryApi {
     @Override
     public ResponseEntity<CategoryResponseApiDTO> createCategory(CategoryRequestApiDTO categoryRequestApiDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        return new ResponseEntity<>(categoryService.createCategory(categoryRequestApiDTO, email), HttpStatus.CREATED);
+        String userEmail = authentication.getName();
+        return new ResponseEntity<>(categoryService.createCategory(categoryRequestApiDTO, userEmail), HttpStatus.CREATED);
     }
 
     @Override

@@ -54,14 +54,14 @@ public class CategoryService {
         }
     }
 
-    public void deleteCategory(Long id, String email) {
+    public void deleteCategory(Long id, String userEmail) {
         log.debug("Deleting category with id: {}", id);
 
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
 
-        User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
+        User currentUser = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new NotFoundException("User not found with email: " + userEmail));
 
         boolean isAdmin = currentUser.getRole().name().equals("ADMIN");
         boolean isCreator = category.getCreatedBy().getId().equals(currentUser.getId());
