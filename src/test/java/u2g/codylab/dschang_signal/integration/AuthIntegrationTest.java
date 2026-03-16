@@ -10,6 +10,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import u2g.codylab.dschang_signal.dto.ChangeRoleRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.LoginRequestApiDTO;
@@ -23,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 class AuthIntegrationTest {
 
     @Autowired
@@ -47,11 +49,9 @@ class AuthIntegrationTest {
         admin.setFullName("Admin User");
         admin.setRole(Role.ADMIN);
         admin.setIsActive(true);
-
         Timestamp now = new Timestamp(System.currentTimeMillis());
         admin.setCreatedAt(now);
         admin.setUpdatedAt(now);
-
         userRepository.save(admin);
     }
 
@@ -96,7 +96,6 @@ class AuthIntegrationTest {
     @Test
     @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void shouldChangeRoleWithValidToken() throws Exception {
-
         Long adminId = userRepository.findByEmail("admin@test.com").get().getId();
 
         ChangeRoleRequestApiDTO changeRole = new ChangeRoleRequestApiDTO();
