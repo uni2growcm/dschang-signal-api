@@ -246,6 +246,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+    delete:
+        operationId: deleteReport
+        tags:
+          - Report
+        summary: Delete a report
+        description: >
+          Only the author of the report can delete it, and only if the report status is PENDING.
+        security:
+          - bearerAuth: [ ]
+        parameters:
+          - name: id
+            in: path
+            required: true
+            description: ID of the report to delete
+            schema:
+              type: integer
+              format: int64
+        responses:
+          '204':
+            description: Report deleted successfully
+          '400':
+            description: Report cannot be deleted because its status is not PENDING
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '403':
+            description: Forbidden - only the author can delete this report
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+          '404':
+            description: Report not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
   /categories:
     post:
       tags:
