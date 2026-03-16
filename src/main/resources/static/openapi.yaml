@@ -179,7 +179,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [ User ]
+      summary: Get the currently authenticated user
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Authenticated user found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /reports/public:
     get:
       operationId: getPublicReports
@@ -286,7 +305,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+  /categories/{id}:
+    delete:
+      operationId: deleteCategory
+      tags: [ Category ]
+      summary: Delete a category
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Category deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - not the creator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /media:
     post:
       operationId: uploadMedia
@@ -634,7 +687,6 @@ components:
     CategoryRequest:
       required:
         - name
-        - createdBy
       type: object
       properties:
         name:
@@ -647,8 +699,6 @@ components:
           example: "#FFD700"
           pattern: '^#[0-9A-Fa-f]{6}$'
           description: Hex color code (optional, random if not provided)
-        createdBy:
-          $ref: '#/components/schemas/User'
 
     CategoryResponse:
       type: object
