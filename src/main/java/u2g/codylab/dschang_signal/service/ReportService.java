@@ -16,6 +16,7 @@ import u2g.codylab.dschang_signal.repository.ReportRepository;
 
 @Slf4j
 @Service
+@Transactional
 public class ReportService {
 
     private final ReportRepository reportRepository;
@@ -47,9 +48,21 @@ public class ReportService {
         } catch (Exception e) {
             throw new BadRequestException("Invalid pagination parameters");
         }
-
-
     }
 
+    @Transactional(readOnly = true)
+    public Page<ReportApiDTO> getAllReports(Pageable pageable) {
+        log.debug("Request to get all reports");
+        try {
+            Page<Report> reports = reportRepository.findAll(pageable);
+            Page<ReportApiDTO> reportsDTO = reports
+                    .map(reportMapper::toReportDTO);
+            log.debug("Reports found: {}", reportsDTO);
+            return reportsDTO;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new BadRequestException("Error occurred while fetching reports");
+        }
+    }
 
 }
