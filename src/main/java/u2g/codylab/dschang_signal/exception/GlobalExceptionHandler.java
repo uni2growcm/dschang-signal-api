@@ -3,6 +3,7 @@ package u2g.codylab.dschang_signal.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -13,6 +14,18 @@ import java.time.OffsetDateTime;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponseApiDTO> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+        log.warn("Authorization denied: {}", ex.getMessage());
+
+        ErrorResponseApiDTO error = new ErrorResponseApiDTO()
+                .timestamp(OffsetDateTime.now())
+                .status(HttpStatus.FORBIDDEN.value())
+                .message("You don't have permission to access this resource");
+
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponseApiDTO> handleException(RuntimeException e) {
