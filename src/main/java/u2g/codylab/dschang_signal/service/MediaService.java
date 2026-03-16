@@ -7,9 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import u2g.codylab.dschang_signal.dto.MediaResponseApiDTO;
 import u2g.codylab.dschang_signal.entity.Media;
+import u2g.codylab.dschang_signal.entity.Report;
 import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.mapper.MediaMapper;
 import u2g.codylab.dschang_signal.repository.MediaRepository;
+import u2g.codylab.dschang_signal.repository.ReportRepository;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -26,8 +28,9 @@ public class MediaService {
     private final MediaMapper mediaMapper;
     private final MediaRepository mediaRepository;
     private final StorageService storageService;
+    private final ReportRepository reportRepository;
 
-    public MediaResponseApiDTO upload(MultipartFile file, String description) {
+    public MediaResponseApiDTO upload(MultipartFile file, String description, Long reportId) {
         log.info("Uploading file: {}, size: {}",
                 file.getOriginalFilename(), file.getSize());
 
@@ -44,6 +47,10 @@ public class MediaService {
         media.setUrl(url);
         media.setOriginalName(file.getOriginalFilename());
         media.setFileSize(file.getSize());
+        if(reportId != null){
+            Report report = reportRepository.findById(reportId)
+                    .orElseThrow(() -> new RuntimeException("Report not found with id: " + reportId));
+            media.setReport(report);}
 
         Media savedMedia = mediaRepository.save(media);
         log.info("Media saved with url: {}", savedMedia.getUrl());

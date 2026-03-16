@@ -297,14 +297,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              type: object
-              required: [ file ]
-              properties:
-                file:
-                  type: string
-                  format: binary
-                description:
-                  type: string
+              $ref: '#/components/schemas/MediaRequest'
       responses:
         '201':
           description: Media uploaded successfully
@@ -443,6 +436,22 @@ components:
           enum: [ ADMIN, CITIZEN ]
           example: CITIZEN
 
+    MediaRequest:
+      type: object
+      required: [ file ]
+      properties:
+        file:
+          type: string
+          format: binary
+          example: accident.jpg
+        description:
+          type: string
+          example: file demo
+        reportId:
+          type: integer
+          format: int64
+          example: 1
+
     User:
       type: object
       properties:
@@ -567,6 +576,8 @@ components:
           type: integer
         description:
           type: string
+        reportId:
+          type: integer
         type:
           type: string
         mimeType:

@@ -7,9 +7,12 @@ import org.springframework.stereotype.Repository;
 import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.entity.Report;
 
+import java.util.List;
+
 
 @Repository
 public interface ReportRepository extends JpaRepository<Report, Long> {
     Page<Report> findByModerationStatus (ModerationStatus moderationStatus, Pageable pageable);
 
+    List<Report> id(Long id);
 }

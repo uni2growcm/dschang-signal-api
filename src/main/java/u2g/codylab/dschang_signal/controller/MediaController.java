@@ -19,10 +19,9 @@ public class MediaController implements MediaApi {
         this.mediaService = mediaService;
     }
 
-    @Override
-    public ResponseEntity<MediaResponseApiDTO> uploadMedia(MultipartFile file, String description
-    ) {
-        return new ResponseEntity<>(mediaService.upload(file, description), HttpStatus.CREATED);
+
+    public ResponseEntity<MediaResponseApiDTO> uploadMedia(MultipartFile file, String description, Long reportId) {
+        return new ResponseEntity<>(mediaService.upload(file, description, reportId), HttpStatus.CREATED);
     }
 
 
