@@ -1,6 +1,8 @@
 package u2g.codylab.dschang_signal.controller;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import u2g.codylab.dschang_signal.api.UserApi;
@@ -44,5 +46,12 @@ public class UserController implements UserApi {
     public ResponseEntity<UserApiDTO> changeUserRole(@PathVariable("id") Long id,
                                                           @Valid @RequestBody ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
         return ResponseEntity.ok(userService.changeUserRole(id, changeRoleRequestApiDTO));
+    }
+
+    @Override
+    public ResponseEntity<UserApiDTO> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return ResponseEntity.ok(userService.getUserByEmail(email));
     }
 }
