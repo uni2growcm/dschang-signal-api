@@ -1,6 +1,7 @@
 package u2g.codylab.dschang_signal.controller;
 
 
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,9 +21,13 @@ public class MediaController implements MediaApi {
     }
 
     @Override
-    public ResponseEntity<MediaResponseApiDTO> uploadMedia(MultipartFile file, String description
+    public ResponseEntity<MediaResponseApiDTO> uploadMedia(
+            Integer reportId,
+            MultipartFile file,
+            String description
     ) {
-        return new ResponseEntity<>(mediaService.upload(file, description), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(mediaService.upload(reportId.longValue(), file, description));
     }
 
 
@@ -32,8 +37,8 @@ public class MediaController implements MediaApi {
     }
 
     @Override
-    public ResponseEntity<MediaResponseApiDTO> getMediaById(Integer mediaId) {
-        return ResponseEntity.ok(mediaService.getById(mediaId));
+    public ResponseEntity<Resource> getMediaById(Integer mediaId) {
+        return mediaService.getById(mediaId);
     }
 
 

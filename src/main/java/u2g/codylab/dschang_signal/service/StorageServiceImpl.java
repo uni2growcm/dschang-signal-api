@@ -1,16 +1,19 @@
 package u2g.codylab.dschang_signal.service;
 
 
-import jakarta.annotation.Resource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import u2g.codylab.dschang_signal.exception.BadRequestException;
+import u2g.codylab.dschang_signal.exception.NotFoundException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.nio.file.*;
 
 @Service
@@ -51,6 +54,21 @@ public class StorageServiceImpl implements StorageService {
             Files.deleteIfExists(targetPath);
         } catch (IOException e) {
             throw new BadRequestException("Failed to delete media in : " + relativePath);
+        }
+    }
+
+    @Override
+    public Resource load(String url) {
+        String relativePath = url.replace(baseUrl + "/", "");
+        Path filePath = Paths.get(basePath).resolve(relativePath);
+        try {
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new NotFoundException("Fichier introuvable : " + relativePath);
+            }
+            return resource;
+        } catch (MalformedURLException e) {
+            throw new NotFoundException("URL invalide : " + relativePath);
         }
     }
 

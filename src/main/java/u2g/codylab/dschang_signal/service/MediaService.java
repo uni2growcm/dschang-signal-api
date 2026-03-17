@@ -2,14 +2,24 @@ package u2g.codylab.dschang_signal.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import u2g.codylab.dschang_signal.dto.MediaResponseApiDTO;
 import u2g.codylab.dschang_signal.entity.Media;
+import u2g.codylab.dschang_signal.entity.Report;
+import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.exception.BadRequestException;
+import u2g.codylab.dschang_signal.exception.NotFoundException;
 import u2g.codylab.dschang_signal.mapper.MediaMapper;
 import u2g.codylab.dschang_signal.repository.MediaRepository;
+import u2g.codylab.dschang_signal.repository.ReportRepository;
+import u2g.codylab.dschang_signal.repository.UserRepository;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -26,15 +36,25 @@ public class MediaService {
     private final MediaMapper mediaMapper;
     private final MediaRepository mediaRepository;
     private final StorageService storageService;
+    private final UserRepository userRepository;
+    private final ReportRepository reportRepository;
 
-    public MediaResponseApiDTO upload(MultipartFile file, String description) {
+    public MediaResponseApiDTO upload(Long reportId,MultipartFile file, String description) {
         log.info("Uploading file: {}, size: {}",
                 file.getOriginalFilename(), file.getSize());
+
+        // Utilisateur connecté
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
+
+        // Report
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new NotFoundException("Report not found: " + reportId));
 
         String mimeType = detectMimeType(file);
         String mediaType = resolveMediaType(mimeType);
         String hash = generateHash(file);
-
         String url = storageService.store(file, mediaType, hash);
 
         Media media = new Media();
@@ -44,6 +64,8 @@ public class MediaService {
         media.setUrl(url);
         media.setOriginalName(file.getOriginalFilename());
         media.setFileSize(file.getSize());
+        media.setReport(report);
+        media.setCreatedBy(currentUser);
 
         Media savedMedia = mediaRepository.save(media);
         log.info("Media saved with url: {}", savedMedia.getUrl());
@@ -56,11 +78,20 @@ public class MediaService {
                 .stream().map(mediaMapper::toMediaDTO).toList();
     }
 
-    public MediaResponseApiDTO getById(Integer mediaId) {
+    public ResponseEntity<Resource> getById(Integer mediaId) {
         Media media = mediaRepository.findById(mediaId.longValue())
-                .orElseThrow(() -> new BadRequestException(
-                        "Media with id " + mediaId + " not found"));
-        return mediaMapper.toMediaDTO(media);
+                .orElseThrow(() -> new NotFoundException(
+                        "Media avec l'id " + mediaId + " introuvable"));
+
+        Resource resource = storageService.load(media.getUrl());
+
+        String contentType = media.getMimeType();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + media.getOriginalName() + "\"")
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(resource);
     }
 
 
