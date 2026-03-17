@@ -38,7 +38,7 @@ public class ReportService {
         log.debug("Request to fetch report by id {}", id);
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "The report with id " + id + " does not exist."
+                        HttpStatus.NOT_FOUND, "Report with id " + id + " not found!"
                 ));
         log.debug("Report with id {} found", id);
         return reportMapper.toReportDTO(report);
@@ -46,16 +46,30 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public Page<ReportApiDTO> getPublicReports(Pageable pageable) {
-        log.debug("Request to fetch public (ACCEPTED) reports");
-        return reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED, pageable)
-                .map(reportMapper::toReportDTO);
+        log.debug("Request to fetch all reports by page {}", pageable);
+        try {
+            Page<ReportApiDTO> dtos = reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED, pageable)
+                    .map(reportMapper::toReportDTO);
+            log.debug("Found {} reports by page {}", dtos.getTotalElements(), pageable);
+            return dtos;
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid pagination parameters");
+        }
     }
 
     @Transactional(readOnly = true)
     public Page<ReportApiDTO> getAllReports(Pageable pageable) {
-        log.debug("Request to fetch all reports (admin)");
-        return reportRepository.findAll(pageable)
-                .map(reportMapper::toReportDTO);
+        log.debug("Request to get all reports");
+        try {
+            Page<Report> reports = reportRepository.findAll(pageable);
+            Page<ReportApiDTO> reportsDTO = reports
+                    .map(reportMapper::toReportDTO);
+            log.debug("Reports found: {}", reportsDTO);
+            return reportsDTO;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new BadRequestException("Error occurred while fetching reports");
+        }
     }
 
     @Transactional
@@ -78,7 +92,7 @@ public class ReportService {
         }
 
         if (newModStatus == ModerationStatus.ACCEPTED) {
-
+            // Rien à faire de plus, on va juste mettre à jour le statut
         } else if (newModStatus == ModerationStatus.REJECTED) {
             if (request.getRejectionReason() == null || request.getRejectionReason().isBlank()) {
                 throw new ResponseStatusException(
@@ -96,8 +110,10 @@ public class ReportService {
         }
 
         report.setModerationStatus(newModStatus);
-        report.setReviewedAt(OffsetDateTime.now());
         report.setUpdatedAt(OffsetDateTime.now());
+        if (newModStatus == ModerationStatus.ACCEPTED || newModStatus == ModerationStatus.REJECTED) {
+            report.setReviewedAt(OffsetDateTime.now());
+        }
 
         Report updated = reportRepository.save(report);
         log.debug("Report with id {} moderation status updated to {}", id, updated.getModerationStatus());
