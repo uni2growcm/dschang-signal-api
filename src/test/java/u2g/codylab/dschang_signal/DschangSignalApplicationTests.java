@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 
-@SpringBootTest(classes = DschangSignalApplication.class) // On lui donne la clé du moteur ici !
+@SpringBootTest(classes = DschangSignalApplication.class)
 class DschangSignalApplicationTests {
 
 	@Test

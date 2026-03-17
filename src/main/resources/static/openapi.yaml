@@ -231,6 +231,41 @@ paths:
                 items:
                   $ref: '#/components/schemas/Report'
 
+  /reports/my-reports:
+    get:
+      operationId: getMyReports
+      tags: [ Report ]
+      summary: Get authenticated user reports
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: createdAt
+      responses:
+        '200':
+          description: List of authenticated user reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Report'
+        '401':
+          description: Unauthorized
+
   /reports/{id}:
     get:
       operationId: getReportById

@@ -58,6 +58,7 @@ public class ReportService {
         } catch (Exception e) {
             throw new BadRequestException("Invalid pagination parameters");
         }
+
     }
 
     @Transactional(readOnly = true)
@@ -96,5 +97,16 @@ public class ReportService {
         }
 
         reportRepository.delete(report);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReportApiDTO> getMyReports(User currentUser, Pageable pageable) {
+        log.debug("Request to fetch reports for user {}", currentUser.getEmail());
+
+            Page<ReportApiDTO> dtos = reportRepository.findByCreatedBy(currentUser, pageable)
+                    .map(reportMapper::toReportDTO);
+            log.debug("Found {} reports for user {}", dtos.getTotalElements(), currentUser.getEmail());
+            return dtos;
+
     }
 }
