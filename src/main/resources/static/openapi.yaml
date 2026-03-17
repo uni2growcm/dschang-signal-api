@@ -139,6 +139,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      operationId: updateUser
+      tags: [ User ]
+      summary: Update user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Cannot modify another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /users/{id}/role:
     patch:
@@ -179,6 +233,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}/password:
+    patch:
+      operationId: updatePassword
+      tags: [ User ]
+      summary: Update user password
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequest'
+      responses:
+        '200':
+          description: Password updated successfully
+        '400':
+          description: Bad request - Invalid input or passwords don't match
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Cannot modify another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /users/me:
     get:
       operationId: getCurrentUser
@@ -199,6 +300,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
   /reports/public:
     get:
       operationId: getPublicReports
@@ -260,6 +362,42 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      operationId: deleteReport
+      tags: [ Report ]
+      summary: Delete a report
+      description: Only the author of the report can delete it, and only if the report status is PENDING.
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the report to delete
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Report deleted successfully
+        '400':
+          description: Report cannot be deleted because its status is not PENDING
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - only the author can delete this report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Report not found
           content:
             application/json:
               schema:
@@ -364,48 +502,116 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-    delete:
-        operationId: deleteReport
-        tags:
-          - Report
-        summary: Delete a report
-        description: >
-          Only the author of the report can delete it, and only if the report status is PENDING.
-        security:
-          - bearerAuth: [ ]
-        parameters:
-          - name: id
-            in: path
-            required: true
-            description: ID of the report to delete
-            schema:
-              type: integer
-              format: int64
-        responses:
-          '204':
-            description: Report deleted successfully
-          '400':
-            description: Report cannot be deleted because its status is not PENDING
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-          '403':
-            description: Forbidden - only the author can delete this report
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
-          '404':
-            description: Report not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ErrorResponse'
+  /reports/admin:
+    get:
+      tags: [ Report ]
+      summary: Get all reports (Admin only)
+      description: Retrieve all reports in the system with pagination and filtering.
+      operationId: getAllReports
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: page
+          in: query
+          description: Page number (zero-based)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sort by field and direction
+          required: false
+          schema:
+            type: string
+            default: reportStatus
+            example: createdAt,desc
+        - name: moderationStatus
+          in: query
+          description: Filter by moderation status
+          required: false
+          schema:
+            type: string
+            enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
+        - name: reportStatus
+          in: query
+          description: Filter by report status
+          required: false
+          schema:
+            type: string
+            enum: [ PENDING, IN_PROGRESS, RESOLVED ]
+        - name: category
+          in: query
+          description: Filter by category
+          required: false
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          description: Filter reports created after this date (ISO format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: toDate
+          in: query
+          description: Filter reports created before this date (ISO format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successful operation
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of elements
+            X-Page-Number:
+              schema:
+                type: integer
+              description: Current page number
+            X-Page-Size:
+              schema:
+                type: integer
+              description: Number of items per page
+            X-Total-Pages:
+              schema:
+                type: integer
+              description: Total number of pages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Report'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /categories:
     post:
-      tags:
-        - Category
+      tags: [ Category ]
       summary: Create a new category
       description: Create a category
       operationId: createCategory
@@ -442,6 +648,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
   /categories/{id}:
     delete:
       operationId: deleteCategory
@@ -530,148 +737,40 @@ paths:
                   $ref: '#/components/schemas/MediaResponse'
 
   /media/{mediaId}:
-      delete:
-        operationId: deleteMedia
-        tags: [ Media ]
-        summary: Delete a media file
-        parameters:
-          - name: mediaId
-            in: path
-            required: true
-            schema:
-              type: integer
-        responses:
-          '204':
-            description: Media deleted successfully
-      get:
-        operationId: getMediaById
-        tags: [ Media ]
-        summary: Get a media file by id
-        security: [ ]
-        parameters:
-          - name: mediaId
-            in: path
-            required: true
-            schema:
-              type: integer
-        responses:
-          '200':
-            description: Media file
-            content:
-              application/octet-stream:
-                schema:
-                  type: string
-                  format: binary
-          '404':
-            description: Media not found
-
-
-  /reports/admin:
-    get:
-      tags: [ Report ]
-      summary: Get all reports (Admin only)
-      description: Retrieve all reports in the system with pagination and filtering.
-      operationId: getAllReports
-      security:
-        - bearerAuth: [ ]
+    delete:
+      operationId: deleteMedia
+      tags: [ Media ]
+      summary: Delete a media file
       parameters:
-        - name: page
-          in: query
-          description: Page number (zero-based)
-          required: false
+        - name: mediaId
+          in: path
+          required: true
           schema:
             type: integer
-            default: 0
-            minimum: 0
-        - name: size
-          in: query
-          description: Number of items per page
-          required: false
+      responses:
+        '204':
+          description: Media deleted successfully
+    get:
+      operationId: getMediaById
+      tags: [ Media ]
+      summary: Get a media file by id
+      security: [ ]
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
           schema:
             type: integer
-            default: 20
-            minimum: 1
-            maximum: 100
-        - name: sort
-          in: query
-          description: 'Sort by field and direction'
-          required: false
-          schema:
-            type: string
-            default: 'reportStatus'
-            example: 'createdAt,desc'
-        - name: moderationStatus
-          in: query
-          description: Filter by moderation status
-          required: false
-          schema:
-            type: string
-            enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
-        - name: reportStatus
-          in: query
-          description: Filter by report status
-          required: false
-          schema:
-            type: string
-            enum: [ PENDING, IN_PROGRESS, RESOLVED ]
-        - name: category
-          in: query
-          description: Filter by category
-          required: false
-          schema:
-            type: string
-        - name: fromDate
-          in: query
-          description: Filter reports created after this date (ISO format)
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: toDate
-          in: query
-          description: Filter reports created before this date (ISO format)
-          required: false
-          schema:
-            type: string
-            format: date-time
       responses:
         '200':
-          description: Successful operation
-          headers:
-            X-Total-Count:
-              schema:
-                type: integer
-              description: Total number of elements
-            X-Page-Number:
-              schema:
-                type: integer
-              description: Current page number
-            X-Page-Size:
-              schema:
-                type: integer
-              description: Number of items per page
-            X-Total-Pages:
-              schema:
-                type: integer
-              description: Total number of pages
+          description: Media file
           content:
-            application/json:
+            application/octet-stream:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Report'
-        '401':
-          description: Unauthorized - Missing or invalid JWT
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Forbidden - User does not have ADMIN role
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: string
+                format: binary
+        '404':
+          description: Media not found
 
 components:
   securitySchemes:
@@ -716,11 +815,11 @@ components:
     Sort:
       name: sort
       in: query
-      description: 'Sorting criteria (example: fullName)'
+      description: Sorting criteria
       required: false
       schema:
         type: string
-        default: 'fullName'
+        default: fullName
 
   schemas:
     LoginRequest:
@@ -773,6 +872,40 @@ components:
           enum: [ ADMIN, CITIZEN ]
           example: CITIZEN
 
+    UpdateUserRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          example: Jean Dupont
+          minLength: 2
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          example: jean.dupont@email.com
+
+    UpdatePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+        - confirmPassword
+      properties:
+        currentPassword:
+          type: string
+          format: password
+          example: ancienMotDePasse123
+        newPassword:
+          type: string
+          format: password
+          example: nouveauMotDePasse456
+          minLength: 6
+        confirmPassword:
+          type: string
+          format: password
+          example: nouveauMotDePasse456
+
     UpdateReportStatusRequest:
       type: object
       required:
@@ -784,7 +917,7 @@ components:
           example: ACCEPTED
         rejectionReason:
           type: string
-          example: "Reporting outside area of jurisdiction"
+          example: Reporting outside area of jurisdiction
           description: Required if status is REJECTED
 
     UpdateReportProgressRequest:
@@ -840,13 +973,13 @@ components:
           example: 1
         title:
           type: string
-          example: "Pothole on Kennedy Avenue"
+          example: Pothole on Kennedy Avenue
         description:
           type: string
-          example: "Large dangerous pothole on the roadway"
+          example: Large dangerous pothole on the roadway
         locationText:
           type: string
-          example: "Kennedy Avenue, in front of the university"
+          example: Kennedy Avenue, in front of the university
         moderationStatus:
           type: string
           example: PENDING_REVIEW
@@ -855,20 +988,20 @@ components:
           example: PENDING
         rejectionReason:
           type: string
-          example: "Area not covered by municipality"
+          example: Area not covered by municipality
         createdAt:
           type: string
           format: date-time
           readOnly: true
-          example: "2026-03-10T14:30:00Z"
+          example: 2026-03-10T14:30:00Z
         reviewedAt:
           type: string
           format: date-time
-          example: "2026-03-11T09:15:00Z"
+          example: 2026-03-11T09:15:00Z
         updatedAt:
           type: string
           format: date-time
-          example: "2026-03-10T14:30:00Z"
+          example: 2026-03-10T14:30:00Z
         createdBy:
           $ref: "#/components/schemas/User"
         categories:
@@ -884,7 +1017,7 @@ components:
       properties:
         name:
           type: string
-          example: "Road"
+          example: Road
           maxLength: 50
           minLength: 2
         color:
@@ -903,7 +1036,7 @@ components:
           example: 1
         name:
           type: string
-          example: "Road"
+          example: Road
           maxLength: 255
         color:
           type: string
@@ -914,7 +1047,7 @@ components:
         createdAt:
           type: string
           format: date-time
-          example: "2026-03-10T10:30:00Z"
+          example: 2026-03-10T10:30:00Z
         createdBy:
           $ref: '#/components/schemas/User'
 
