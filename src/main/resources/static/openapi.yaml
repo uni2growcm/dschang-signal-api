@@ -15,7 +15,6 @@ tags:
   - name: User
   - name: Report
   - name: Category
-  - name: Media
 
 paths:
   /login:
@@ -180,7 +179,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [ User ]
+      summary: Get the currently authenticated user
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Authenticated user found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /reports/public:
     get:
       operationId: getPublicReports
@@ -362,8 +380,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CategoryRequest'
       responses:
-        '200':
-          description: JWT token
+        '201':
+          description: Category created successfully
           content:
             application/json:
               schema:
@@ -386,7 +404,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+  /categories/{id}:
+    delete:
+      operationId: deleteCategory
+      tags: [ Category ]
+      summary: Delete a category
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Category deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - not the creator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /media:
     post:
       operationId: uploadMedia
@@ -442,6 +494,114 @@ paths:
         '204':
           description: Media deleted successfully
 
+
+  /reports/admin:
+    get:
+      tags: [ Report ]
+      summary: Get all reports (Admin only)
+      description: Retrieve all reports in the system with pagination and filtering.
+      operationId: getAllReports
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: page
+          in: query
+          description: Page number (zero-based)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: 'Sort by field and direction'
+          required: false
+          schema:
+            type: string
+            default: 'reportStatus'
+            example: 'createdAt,desc'
+        - name: moderationStatus
+          in: query
+          description: Filter by moderation status
+          required: false
+          schema:
+            type: string
+            enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
+        - name: reportStatus
+          in: query
+          description: Filter by report status
+          required: false
+          schema:
+            type: string
+            enum: [ PENDING, IN_PROGRESS, RESOLVED ]
+        - name: category
+          in: query
+          description: Filter by category
+          required: false
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          description: Filter reports created after this date (ISO format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: toDate
+          in: query
+          description: Filter reports created before this date (ISO format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successful operation
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Total number of elements
+            X-Page-Number:
+              schema:
+                type: integer
+              description: Current page number
+            X-Page-Size:
+              schema:
+                type: integer
+              description: Number of items per page
+            X-Total-Pages:
+              schema:
+                type: integer
+              description: Total number of pages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Report'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -453,17 +613,21 @@ components:
     X-Total-Count:
       schema:
         type: integer
+      description: Total amount of elements for this query
     X-Page-Number:
       schema:
         type: integer
+      description: Page number starting from 0
     X-Page-Size:
       schema:
         type: integer
+      description: Page size
 
   parameters:
     Page:
       name: page
       in: query
+      description: Page number
       required: false
       schema:
         type: integer
@@ -472,6 +636,7 @@ components:
     Size:
       name: size
       in: query
+      description: Number of items per page
       required: false
       schema:
         type: integer
@@ -480,6 +645,7 @@ components:
     Sort:
       name: sort
       in: query
+      description: 'Sorting criteria (example: fullName)'
       required: false
       schema:
         type: string
@@ -543,8 +709,8 @@ components:
       properties:
         status:
           type: string
-          enum: [ PENDING, IN_PROGRESS, RESOLVED, REJECTED ]
-          example: RESOLVED
+          enum: [ PENDING, IN_PROGRESS, ACCEPTED, REJECTED ]
+          example: ACCEPTED
         rejectionReason:
           type: string
           example: "Reporting outside area of jurisdiction"
@@ -603,19 +769,13 @@ components:
           example: 1
         title:
           type: string
-          example: Nid de poule
+          example: "Pothole on Kennedy Avenue"
         description:
           type: string
-          example: Grand nid de poule sur la route
-        category:
-          type: string
-          example: INFRASTRUCTURE
+          example: "Large dangerous pothole on the roadway"
         locationText:
           type: string
-          example: Avenue Kennedy
-        photoUrl:
-          type: string
-          example: https://example.com/photo.jpg
+          example: "Kennedy Avenue, in front of the university"
         moderationStatus:
           type: string
           example: PENDING_REVIEW
@@ -624,22 +784,31 @@ components:
           example: PENDING
         rejectionReason:
           type: string
-          example: null
+          example: "Area not covered by municipality"
         createdAt:
           type: string
           format: date-time
           readOnly: true
+          example: "2026-03-10T14:30:00Z"
         reviewedAt:
           type: string
           format: date-time
-          example: null
+          example: "2026-03-11T09:15:00Z"
         updatedAt:
           type: string
           format: date-time
+          example: "2026-03-10T14:30:00Z"
+        createdBy:
+          $ref: "#/components/schemas/User"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryResponse"
 
     CategoryRequest:
       required:
         - name
+        - createdBy
       type: object
       properties:
         name:
@@ -651,6 +820,9 @@ components:
           type: string
           example: "#FFD700"
           pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Hex color code (optional, random if not provided)
+        createdBy:
+          $ref: '#/components/schemas/User'
 
     CategoryResponse:
       type: object
@@ -666,13 +838,14 @@ components:
           type: string
           example: "#FF5733"
           pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Hex color code (e.g., #FF5733)
+          maxLength: 10
         createdAt:
           type: string
           format: date-time
           example: "2026-03-10T10:30:00Z"
         createdBy:
-          type: string
-          example: "user@email.com"
+          $ref: '#/components/schemas/User'
 
     MediaResponse:
       type: object

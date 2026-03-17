@@ -13,6 +13,8 @@ import u2g.codylab.dschang_signal.dto.UpdateReportProgressRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.entity.Report;
 import u2g.codylab.dschang_signal.entity.ReportStatus;
+import u2g.codylab.dschang_signal.entity.User;
+import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.mapper.ReportMapper;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
 
@@ -49,6 +51,13 @@ public class ReportService {
                 .map(reportMapper::toReportDTO);
     }
 
+    @Transactional(readOnly = true)
+    public Page<ReportApiDTO> getAllReports(Pageable pageable) {
+        log.debug("Request to fetch all reports (admin)");
+        return reportRepository.findAll(pageable)
+                .map(reportMapper::toReportDTO);
+    }
+
     @Transactional
     public ReportApiDTO updateReportStatus(Long id, UpdateReportStatusRequestApiDTO request) {
         log.debug("Request to update moderation status of report with id {}", id);
@@ -59,41 +68,30 @@ public class ReportService {
                 ));
 
         ModerationStatus currentModStatus = report.getModerationStatus();
-        ReportStatus currentRepStatus = report.getReportStatus();
         ModerationStatus newModStatus = ModerationStatus.valueOf(request.getStatus().getValue());
 
-
-        if (currentModStatus == ModerationStatus.PENDING_REVIEW) {
-            if (newModStatus == ModerationStatus.ACCEPTED) {
-                if (currentRepStatus != ReportStatus.IN_PROGRESS) {
-                    throw new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
-                            "Cannot accept a report that is not in IN_PROGRESS. Current status: " + currentRepStatus
-                    );
-                }
-                report.setReportStatus(ReportStatus.RESOLVED);
-
-            } else if (newModStatus == ModerationStatus.REJECTED) {
-
-                if (request.getRejectionReason() == null || request.getRejectionReason().isBlank()) {
-                    throw new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
-                            "A rejection reason is required when rejecting a report."
-                    );
-                }
-                report.setRejectionReason(request.getRejectionReason());
-                report.setReportStatus(ReportStatus.REJECTED);
-
-            } else {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Invalid moderation status transition from " + currentModStatus + " to " + newModStatus
-                );
-            }
-        } else {
+        if (currentModStatus != ModerationStatus.PENDING_REVIEW) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Cannot update moderation status when current status is " + currentModStatus
+            );
+        }
+
+        if (newModStatus == ModerationStatus.ACCEPTED) {
+
+        } else if (newModStatus == ModerationStatus.REJECTED) {
+            if (request.getRejectionReason() == null || request.getRejectionReason().isBlank()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "A rejection reason is required when rejecting a report."
+                );
+            }
+            report.setRejectionReason(request.getRejectionReason());
+            report.setReportStatus(ReportStatus.REJECTED);
+        } else {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid moderation status transition from " + currentModStatus + " to " + newModStatus
             );
         }
 
@@ -118,16 +116,21 @@ public class ReportService {
         ModerationStatus currentModStatus = report.getModerationStatus();
         ReportStatus currentRepStatus = report.getReportStatus();
 
-
-        if (currentModStatus != ModerationStatus.PENDING_REVIEW) {
+        if (currentModStatus != ModerationStatus.ACCEPTED) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Cannot update progress status when moderation status is " + currentModStatus
+                    "Cannot update progress status when moderation status is " + currentModStatus + ". Report must be ACCEPTED first."
+            );
+        }
+
+        if (currentRepStatus == ReportStatus.REJECTED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cannot update progress status of a rejected report"
             );
         }
 
         if (newStatus == ReportStatus.IN_PROGRESS) {
-
             if (currentRepStatus != ReportStatus.PENDING) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
@@ -142,13 +145,11 @@ public class ReportService {
                 );
             }
         } else if (newStatus == ReportStatus.PENDING) {
-
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Cannot revert to PENDING from " + currentRepStatus
             );
         } else if (newStatus == ReportStatus.REJECTED) {
-
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Use the moderation status endpoint to reject a report"

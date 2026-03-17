@@ -3,7 +3,8 @@ package u2g.codylab.dschang_signal.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;

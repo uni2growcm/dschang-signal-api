@@ -111,13 +111,98 @@ class ReportServiceTest {
     }
 
     @Test
-    void shouldUpdateReportProgressSuccessfully() {
+    void shouldAcceptReportSuccessfully() {
+        Long reportId = 1L;
+
+        Report report = new Report();
+        report.setId(reportId);
+        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+        report.setReportStatus(ReportStatus.PENDING);
+
+        UpdateReportStatusRequestApiDTO request = mock(UpdateReportStatusRequestApiDTO.class);
+        UpdateReportStatusRequestApiDTO.StatusEnum statusEnum =
+                UpdateReportStatusRequestApiDTO.StatusEnum.ACCEPTED;
+
+        when(request.getStatus()).thenReturn(statusEnum);
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(reportRepository.save(any(Report.class))).thenReturn(report);
+
+        ReportApiDTO expectedDto = new ReportApiDTO();
+        when(reportMapper.toReportDTO(report)).thenReturn(expectedDto);
+
+        ReportApiDTO result = reportService.updateReportStatus(reportId, request);
+
+        assertNotNull(result);
+        assertEquals(ModerationStatus.ACCEPTED, report.getModerationStatus());
+        assertEquals(ReportStatus.PENDING, report.getReportStatus());
+
+        verify(reportRepository).findById(reportId);
+        verify(reportRepository).save(report);
+    }
+
+    @Test
+    void shouldRejectReportWithReason() {
+        Long reportId = 1L;
+        String rejectionReason = "Hors zone de compétence";
+
+        Report report = new Report();
+        report.setId(reportId);
+        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+        report.setReportStatus(ReportStatus.PENDING);
+
+        UpdateReportStatusRequestApiDTO request = mock(UpdateReportStatusRequestApiDTO.class);
+        UpdateReportStatusRequestApiDTO.StatusEnum statusEnum =
+                UpdateReportStatusRequestApiDTO.StatusEnum.REJECTED;
+
+        when(request.getStatus()).thenReturn(statusEnum);
+        when(request.getRejectionReason()).thenReturn(rejectionReason);
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(reportRepository.save(any(Report.class))).thenReturn(report);
+
+        ReportApiDTO expectedDto = new ReportApiDTO();
+        when(reportMapper.toReportDTO(report)).thenReturn(expectedDto);
+
+        ReportApiDTO result = reportService.updateReportStatus(reportId, request);
+
+        assertNotNull(result);
+        assertEquals(ModerationStatus.REJECTED, report.getModerationStatus());
+        assertEquals(ReportStatus.REJECTED, report.getReportStatus());
+        assertEquals(rejectionReason, report.getRejectionReason());
+
+        verify(reportRepository).findById(reportId);
+        verify(reportRepository).save(report);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenRejectingWithoutReason() {
+        Long reportId = 1L;
+
+        Report report = new Report();
+        report.setId(reportId);
+        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+
+        UpdateReportStatusRequestApiDTO request = mock(UpdateReportStatusRequestApiDTO.class);
+        UpdateReportStatusRequestApiDTO.StatusEnum statusEnum =
+                UpdateReportStatusRequestApiDTO.StatusEnum.REJECTED;
+
+        when(request.getStatus()).thenReturn(statusEnum);
+        when(request.getRejectionReason()).thenReturn(null);
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        assertThrows(ResponseStatusException.class,
+                () -> reportService.updateReportStatus(reportId, request));
+
+        verify(reportRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldUpdateReportProgressToInProgressSuccessfully() {
         Long reportId = 1L;
         ReportStatus newStatus = ReportStatus.IN_PROGRESS;
 
         Report report = new Report();
         report.setId(reportId);
-        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+        report.setModerationStatus(ModerationStatus.ACCEPTED);
         report.setReportStatus(ReportStatus.PENDING);
 
         ReportApiDTO expectedDto = new ReportApiDTO();
@@ -138,27 +223,13 @@ class ReportServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenUpdatingProgressForNonExistentReport() {
-        Long reportId = 999L;
-        ReportStatus newStatus = ReportStatus.IN_PROGRESS;
-
-        when(reportRepository.findById(reportId)).thenReturn(Optional.empty());
-
-        assertThrows(ResponseStatusException.class,
-                () -> reportService.updateReportProgress(reportId, newStatus));
-
-        verify(reportRepository).findById(reportId);
-        verify(reportRepository, never()).save(any());
-    }
-
-    @Test
-    void shouldUpdateReportProgressFromInProgressToResolved() {
+    void shouldUpdateReportProgressToResolvedSuccessfully() {
         Long reportId = 1L;
         ReportStatus newStatus = ReportStatus.RESOLVED;
 
         Report report = new Report();
         report.setId(reportId);
-        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+        report.setModerationStatus(ModerationStatus.ACCEPTED);
         report.setReportStatus(ReportStatus.IN_PROGRESS);
 
         ReportApiDTO expectedDto = new ReportApiDTO();
@@ -177,9 +248,9 @@ class ReportServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenMovingFromPendingToResolved() {
+    void shouldThrowExceptionWhenProgressWithoutAcceptedModeration() {
         Long reportId = 1L;
-        ReportStatus newStatus = ReportStatus.RESOLVED;
+        ReportStatus newStatus = ReportStatus.IN_PROGRESS;
 
         Report report = new Report();
         report.setId(reportId);
@@ -191,7 +262,24 @@ class ReportServiceTest {
         assertThrows(ResponseStatusException.class,
                 () -> reportService.updateReportProgress(reportId, newStatus));
 
-        verify(reportRepository).findById(reportId);
+        verify(reportRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenMovingFromPendingToResolved() {
+        Long reportId = 1L;
+        ReportStatus newStatus = ReportStatus.RESOLVED;
+
+        Report report = new Report();
+        report.setId(reportId);
+        report.setModerationStatus(ModerationStatus.ACCEPTED);
+        report.setReportStatus(ReportStatus.PENDING);
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        assertThrows(ResponseStatusException.class,
+                () -> reportService.updateReportProgress(reportId, newStatus));
+
         verify(reportRepository, never()).save(any());
     }
 
@@ -202,10 +290,23 @@ class ReportServiceTest {
 
         Report report = new Report();
         report.setId(reportId);
-        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+        report.setModerationStatus(ModerationStatus.ACCEPTED);
         report.setReportStatus(ReportStatus.IN_PROGRESS);
 
         when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        assertThrows(ResponseStatusException.class,
+                () -> reportService.updateReportProgress(reportId, newStatus));
+
+        verify(reportRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUpdatingProgressForNonExistentReport() {
+        Long reportId = 999L;
+        ReportStatus newStatus = ReportStatus.IN_PROGRESS;
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class,
                 () -> reportService.updateReportProgress(reportId, newStatus));

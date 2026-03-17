@@ -1,6 +1,9 @@
 package u2g.codylab.dschang_signal.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import u2g.codylab.dschang_signal.api.UserApi;
@@ -13,8 +16,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import jakarta.validation.Valid;
+import u2g.codylab.dschang_signal.api.UserApi;
+import u2g.codylab.dschang_signal.dto.ChangeRoleRequestApiDTO;
+import u2g.codylab.dschang_signal.dto.UserApiDTO;
+import u2g.codylab.dschang_signal.service.UserService;
 
 import java.util.List;
 
@@ -29,7 +38,7 @@ public class UserController implements UserApi {
 
     @Override
     public ResponseEntity<List<UserApiDTO>> getAllUsers(Integer page, Integer size, String sort) {
-        // Sécurité pour éviter les NullPointerException si page/size sont null
+
         int p = (page != null) ? page : 0;
         int s = (size != null) ? size : 20;
         String st = (sort != null) ? sort : "id";
@@ -49,5 +58,12 @@ public class UserController implements UserApi {
     public ResponseEntity<UserApiDTO> changeUserRoleAdmin(@PathVariable("id") Long id,
                                                           @Valid @RequestBody ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
         return ResponseEntity.ok(userService.changeUserRole(id, changeRoleRequestApiDTO));
+    }
+
+    @Override
+    public ResponseEntity<UserApiDTO> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return ResponseEntity.ok(userService.getUserByEmail(email));
     }
 }
