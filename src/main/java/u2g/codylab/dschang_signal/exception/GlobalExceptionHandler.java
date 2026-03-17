@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import u2g.codylab.dschang_signal.dto.ErrorResponseApiDTO;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.AuthenticationException;
 
 import java.time.OffsetDateTime;
 
@@ -55,5 +57,29 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .message("Internal Server Error");
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponseApiDTO> handleAuthenticationException(AuthenticationException ex) {
+        log.warn("Authentication error: {}", ex.getMessage());
+
+        ErrorResponseApiDTO error = new ErrorResponseApiDTO()
+                .timestamp(OffsetDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message("Unauthorized");
+
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
+    public ResponseEntity<ErrorResponseApiDTO> handleAuthNotFound(AuthenticationCredentialsNotFoundException ex) {
+        log.warn("Authentication not found: {}", ex.getMessage());
+
+        ErrorResponseApiDTO error = new ErrorResponseApiDTO()
+                .timestamp(OffsetDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message("Authentication required");
+
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 }
