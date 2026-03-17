@@ -43,12 +43,10 @@ public class MediaService {
         log.info("Uploading file: {}, size: {}",
                 file.getOriginalFilename(), file.getSize());
 
-        // Utilisateur connecté
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));
 
-        // Report
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new NotFoundException("Report not found: " + reportId));
 
