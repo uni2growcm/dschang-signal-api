@@ -68,4 +68,9 @@ public class UserService {
         log.debug("User with email {} found", user.getEmail());
         return userMapper.toUserDTO(user);
     }
+    public User getUserEntityByEmail(String email) {
+        log.debug("Request to fetch user entity by email: {}", email);
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
+    }
 }

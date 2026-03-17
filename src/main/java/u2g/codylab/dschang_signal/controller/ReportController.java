@@ -17,6 +17,7 @@ import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 
 import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.service.ReportService;
+import u2g.codylab.dschang_signal.service.UserService;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -25,9 +26,11 @@ import java.util.List;
 public class ReportController implements ReportApi {
 
     private final ReportService reportService;
+    private final UserService userService;
 
-    public ReportController(ReportService reportService) {
+    public ReportController(ReportService reportService, UserService userService) {
         this.reportService = reportService;
+        this.userService = userService;
     }
 
     @Override
@@ -58,6 +61,18 @@ public class ReportController implements ReportApi {
         );
         Page<ReportApiDTO> reports = reportService.getPublicReports(pageable);
         return new ResponseEntity<>(reports.getContent(), HttpStatus.OK);
+    }
+
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteReport(@PathVariable("id") Long id) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userService.getUserEntityByEmail(email);
+
+        reportService.deleteReport(id, currentUser);
+
+        return ResponseEntity.noContent().build();
     }
 
 }
