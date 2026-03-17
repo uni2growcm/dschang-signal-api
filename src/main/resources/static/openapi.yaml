@@ -340,11 +340,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /media:
+
+  /reports/{reportId}/media:
     post:
       operationId: uploadMedia
       tags: [ Media ]
-      summary: Upload a media file
+      summary: Upload a media file for a report
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
@@ -365,7 +374,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MediaResponse'
+        '404':
+          description: Report not found
 
+  /media:
     get:
       operationId: getAllMedia
       tags: [ Media ]
@@ -394,6 +406,27 @@ paths:
         responses:
           '204':
             description: Media deleted successfully
+      get:
+        operationId: getMediaById
+        tags: [ Media ]
+        summary: Get a media file by id
+        security: [ ]
+        parameters:
+          - name: mediaId
+            in: path
+            required: true
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: Media file
+            content:
+              application/octet-stream:
+                schema:
+                  type: string
+                  format: binary
+          '404':
+            description: Media not found
 
 
   /reports/admin:
