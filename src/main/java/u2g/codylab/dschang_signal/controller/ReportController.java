@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import u2g.codylab.dschang_signal.api.ReportApi;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdateReportStatusRequestApiDTO;
+import u2g.codylab.dschang_signal.dto.UpdateReportProgressRequestApiDTO;
+import u2g.codylab.dschang_signal.entity.ReportStatus;
 import u2g.codylab.dschang_signal.service.ReportService;
 
 import java.util.List;
@@ -50,5 +52,17 @@ public class ReportController implements ReportApi {
             @PathVariable("id") Long id,
             @Valid @RequestBody UpdateReportStatusRequestApiDTO updateReportStatusRequestApiDTO) {
         return ResponseEntity.ok(reportService.updateReportStatus(id, updateReportStatusRequestApiDTO));
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ReportApiDTO> updateReportProgress(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody UpdateReportProgressRequestApiDTO updateReportProgressRequestApiDTO) {
+
+        String statusValue = updateReportProgressRequestApiDTO.getStatus().getValue();
+        ReportStatus reportStatus = ReportStatus.valueOf(statusValue);
+
+        return ResponseEntity.ok(reportService.updateReportProgress(id, reportStatus));
     }
 }

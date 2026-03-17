@@ -29,7 +29,12 @@ public class UserController implements UserApi {
 
     @Override
     public ResponseEntity<List<UserApiDTO>> getAllUsers(Integer page, Integer size, String sort) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+        // Sécurité pour éviter les NullPointerException si page/size sont null
+        int p = (page != null) ? page : 0;
+        int s = (size != null) ? size : 20;
+        String st = (sort != null) ? sort : "id";
+
+        Pageable pageable = PageRequest.of(p, s, Sort.by(st));
         Page<UserApiDTO> usersPage = userService.getAllUsers(pageable);
         return new ResponseEntity<>(usersPage.getContent(), HttpStatus.OK);
     }
@@ -40,7 +45,8 @@ public class UserController implements UserApi {
     }
 
     @Override
-    public ResponseEntity<UserApiDTO> changeUserRoleAdmin(Long id,
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserApiDTO> changeUserRoleAdmin(@PathVariable("id") Long id,
                                                           @Valid @RequestBody ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
         return ResponseEntity.ok(userService.changeUserRole(id, changeRoleRequestApiDTO));
     }

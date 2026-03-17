@@ -15,6 +15,7 @@ tags:
   - name: User
   - name: Report
   - name: Category
+  - name: Media
 
 paths:
   /login:
@@ -273,8 +274,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Report'
+        '400':
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '403':
           description: Forbidden - Admin only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{id}/progress:
+    patch:
+      operationId: updateReportProgress
+      tags: [ Report ]
+      summary: Update report progress status (Admin only)
+      description: Update the progress status (PENDING, IN_PROGRESS, RESOLVED) of a specific report.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the report
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReportProgressRequest'
+      responses:
+        '200':
+          description: Report progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not have ADMIN role
           content:
             application/json:
               schema:
@@ -483,12 +543,22 @@ components:
       properties:
         status:
           type: string
-          enum: [ PENDING, RESOLVED, REJECTED ]
+          enum: [ PENDING, IN_PROGRESS, RESOLVED, REJECTED ]
           example: RESOLVED
         rejectionReason:
           type: string
           example: "Reporting outside area of jurisdiction"
-          description: Obligatoire si le statut est REJECTED
+          description: Required if status is REJECTED
+
+    UpdateReportProgressRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [ PENDING, IN_PROGRESS, RESOLVED ]
+          example: IN_PROGRESS
 
     User:
       type: object
@@ -548,12 +618,13 @@ components:
           example: https://example.com/photo.jpg
         moderationStatus:
           type: string
-          example: PENDING
+          example: PENDING_REVIEW
         reportStatus:
           type: string
-          example: OPEN
+          example: PENDING
         rejectionReason:
           type: string
+          example: null
         createdAt:
           type: string
           format: date-time
@@ -561,6 +632,7 @@ components:
         reviewedAt:
           type: string
           format: date-time
+          example: null
         updatedAt:
           type: string
           format: date-time
