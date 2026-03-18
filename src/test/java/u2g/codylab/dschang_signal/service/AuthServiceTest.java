@@ -9,8 +9,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import u2g.codylab.dschang_signal.dto.LoginRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.RegisterRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.User;
+import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.exception.ConflictException;
-import u2g.codylab.dschang_signal.exception.UnauthorizedException;
 import u2g.codylab.dschang_signal.repository.UserRepository;
 
 import java.util.Optional;
@@ -27,12 +27,14 @@ class AuthServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private I18nService i18nService;
+
     @InjectMocks
     private AuthService authService;
 
     @Test
     void shouldRegisterUserSuccessfully() {
-
         RegisterRequestApiDTO dto = new RegisterRequestApiDTO();
         dto.setEmail("test@mail.com");
         dto.setPassword("password");
@@ -48,23 +50,21 @@ class AuthServiceTest {
 
     @Test
     void shouldThrowExceptionWhenEmailAlreadyExists() {
-
         RegisterRequestApiDTO dto = new RegisterRequestApiDTO();
         dto.setEmail("test@mail.com");
 
         when(userRepository.findByEmail(dto.getEmail()))
                 .thenReturn(Optional.of(new User()));
+        when(i18nService.get("register.error.email"))
+                .thenReturn("This email is already in use.");
 
-        assertThrows(ConflictException.class, () -> {
-            authService.register(dto);
-        });
+        assertThrows(ConflictException.class, () -> authService.register(dto));
 
         verify(userRepository, never()).save(any());
     }
 
     @Test
     void shouldLoginSuccessfully() {
-
         LoginRequestApiDTO dto = new LoginRequestApiDTO();
         dto.setEmail("admin@test.com");
         dto.setPassword("password");
@@ -75,7 +75,6 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail(dto.getEmail()))
                 .thenReturn(Optional.of(user));
-
         when(passwordEncoder.matches(dto.getPassword(), user.getPassword()))
                 .thenReturn(true);
 
@@ -87,7 +86,6 @@ class AuthServiceTest {
 
     @Test
     void shouldThrowExceptionWhenPasswordInvalid() {
-
         LoginRequestApiDTO dto = new LoginRequestApiDTO();
         dto.setEmail("admin@test.com");
         dto.setPassword("wrongPassword");
@@ -98,12 +96,11 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail(dto.getEmail()))
                 .thenReturn(Optional.of(user));
-
         when(passwordEncoder.matches(dto.getPassword(), user.getPassword()))
                 .thenReturn(false);
+        when(i18nService.get("login.error.credentials"))
+                .thenReturn("Invalid email or password.");
 
-        assertThrows(UnauthorizedException.class, () -> {
-            authService.login(dto);
-        });
+        assertThrows(BadRequestException.class, () -> authService.login(dto));
     }
 }
