@@ -264,7 +264,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+  /reports:
+    post:
+      operationId: createReport
+      tags: [ Report ]
+      summary: Create a new report
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+      responses:
+        '201':
+          description: Report created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
         operationId: deleteReport
         tags:
@@ -624,6 +655,31 @@ components:
         default: 'fullName'
 
   schemas:
+    ReportRequest:
+      type: object
+      required:
+        - title
+        - description
+        - locationText
+      properties:
+        title:
+          type: string
+          example: "Pothole on Kennedy Avenue"
+          minLength: 3
+          maxLength: 150
+        description:
+          type: string
+          example: "Large dangerous pothole on the roadway"
+          minLength: 10
+        locationText:
+          type: string
+          example: "Kennedy Avenue, in front of the university"
+        categoryIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example: [ 1, 2 ]
     LoginRequest:
       type: object
       required:
