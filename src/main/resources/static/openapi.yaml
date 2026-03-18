@@ -142,7 +142,7 @@ paths:
 
   /users/{id}/role:
     patch:
-      operationId: changeUserRoleAdmin
+      operationId: changeUserRole
       tags: [ User ]
       summary: Change a user's role (Admin only)
       parameters:
@@ -265,105 +265,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /reports/{id}/status:
-    patch:
-      operationId: updateReportStatus
-      tags: [ Report ]
-      summary: Update report moderation status (Admin only)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Unique identifier of the report
-          schema:
-            type: integer
-            format: int64
-            example: 1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateReportStatusRequest'
-      responses:
-        '200':
-          description: Report status updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Report'
-        '400':
-          description: Bad request - Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Forbidden - Admin only
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Report not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /reports/{id}/progress:
-    patch:
-      operationId: updateReportProgress
-      tags: [ Report ]
-      summary: Update report progress status (Admin only)
-      description: Update the progress status (PENDING, IN_PROGRESS, RESOLVED) of a specific report.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Unique identifier of the report
-          schema:
-            type: integer
-            format: int64
-            example: 1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateReportProgressRequest'
-      responses:
-        '200':
-          description: Report progress updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Report'
-        '400':
-          description: Bad request - Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized - Missing or invalid JWT
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Forbidden - User does not have ADMIN role
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Report not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
     delete:
         operationId: deleteReport
         tags:
@@ -402,6 +303,106 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{id}/moderation-status:
+    patch:
+      operationId: updateModerationStatus
+      tags: [ Report ]
+      summary: Update report moderation status (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the report
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateModerationStatusRequest'
+      responses:
+        '200':
+          description: Report status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{id}/report-status:
+    patch:
+      operationId: updateReportStatus
+      tags: [ Report ]
+      summary: Update report status (Admin only)
+      description: Update the progression status (PENDING, IN_PROGRESS, RESOLVED) of a specific report.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the report
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReportStatusRequest'
+      responses:
+        '200':
+          description: Report status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /categories:
     post:
       tags:
@@ -773,21 +774,21 @@ components:
           enum: [ ADMIN, CITIZEN ]
           example: CITIZEN
 
-    UpdateReportStatusRequest:
+    UpdateModerationStatusRequest:
       type: object
       required:
         - status
       properties:
         status:
           type: string
-          enum: [ PENDING, IN_PROGRESS, ACCEPTED, REJECTED ]
+          enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
           example: ACCEPTED
         rejectionReason:
           type: string
           example: "Reporting outside area of jurisdiction"
           description: Required if status is REJECTED
 
-    UpdateReportProgressRequest:
+    UpdateReportStatusRequest:
       type: object
       required:
         - status
@@ -849,10 +850,12 @@ components:
           example: "Kennedy Avenue, in front of the university"
         moderationStatus:
           type: string
-          example: PENDING_REVIEW
+          enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
+          example: "PENDING_REVIEW"
         reportStatus:
           type: string
-          example: PENDING
+          enum: [ PENDING, IN_PROGRESS, RESOLVED ]
+          example: "PENDING"
         rejectionReason:
           type: string
           example: "Area not covered by municipality"
@@ -879,7 +882,6 @@ components:
     CategoryRequest:
       required:
         - name
-        - createdBy
       type: object
       properties:
         name:
@@ -892,8 +894,6 @@ components:
           example: "#FFD700"
           pattern: '^#[0-9A-Fa-f]{6}$'
           description: Hex color code (optional, random if not provided)
-        createdBy:
-          $ref: '#/components/schemas/User'
 
     CategoryResponse:
       type: object

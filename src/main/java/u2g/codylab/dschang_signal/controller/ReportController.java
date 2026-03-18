@@ -7,21 +7,20 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import u2g.codylab.dschang_signal.dto.UpdateModerationStatusRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdateReportStatusRequestApiDTO;
-import u2g.codylab.dschang_signal.dto.UpdateReportProgressRequestApiDTO;
 import u2g.codylab.dschang_signal.api.ReportApi;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 
+import u2g.codylab.dschang_signal.entity.ReportStatus;
 import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.service.ReportService;
-import u2g.codylab.dschang_signal.entity.ReportStatus;
+import u2g.codylab.dschang_signal.service.UserService;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -30,9 +29,11 @@ import java.util.List;
 public class ReportController implements ReportApi {
 
     private final ReportService reportService;
+    private final UserService userService;
 
-    public ReportController(ReportService reportService) {
+    public ReportController(ReportService reportService, UserService userService) {
         this.reportService = reportService;
+        this.userService = userService;
     }
 
     @Override
@@ -67,21 +68,33 @@ public class ReportController implements ReportApi {
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ReportApiDTO> updateReportStatus(
+    public ResponseEntity<ReportApiDTO> updateModerationStatus(
             @PathVariable("id") Long id,
-            @Valid @RequestBody UpdateReportStatusRequestApiDTO updateReportStatusRequestApiDTO) {
-        return ResponseEntity.ok(reportService.updateReportStatus(id, updateReportStatusRequestApiDTO));
+            @Valid @RequestBody UpdateModerationStatusRequestApiDTO updateModerationStatusRequest) {
+        return ResponseEntity.ok(reportService.updateModerationStatus(id, updateModerationStatusRequest));
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ReportApiDTO> updateReportProgress(
+    public ResponseEntity<ReportApiDTO> updateReportStatus(
             @PathVariable("id") Long id,
-            @Valid @RequestBody UpdateReportProgressRequestApiDTO updateReportProgressRequestApiDTO) {
+            @Valid @RequestBody UpdateReportStatusRequestApiDTO updateReportStatusRequest) {
 
-        String statusValue = updateReportProgressRequestApiDTO.getStatus().getValue();
+        String statusValue = updateReportStatusRequest.getStatus().getValue();
         ReportStatus reportStatus = ReportStatus.valueOf(statusValue);
 
-        return ResponseEntity.ok(reportService.updateReportProgress(id, reportStatus));
+        return ResponseEntity.ok(reportService.updateReportStatus(id, reportStatus));
+    }
+
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteReport(@PathVariable("id") Long id) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userService.getUserEntityByEmail(email);
+
+        reportService.deleteReport(id, currentUser);
+
+        return ResponseEntity.noContent().build();
     }
 }

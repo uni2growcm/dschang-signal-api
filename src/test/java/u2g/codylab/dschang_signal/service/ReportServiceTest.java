@@ -8,7 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.web.server.ResponseStatusException;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
-import u2g.codylab.dschang_signal.dto.UpdateReportStatusRequestApiDTO;
+import u2g.codylab.dschang_signal.dto.UpdateModerationStatusRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.entity.Report;
 import u2g.codylab.dschang_signal.entity.ReportStatus;
@@ -119,9 +119,9 @@ class ReportServiceTest {
         report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
         report.setReportStatus(ReportStatus.PENDING);
 
-        UpdateReportStatusRequestApiDTO request = mock(UpdateReportStatusRequestApiDTO.class);
-        UpdateReportStatusRequestApiDTO.StatusEnum statusEnum =
-                UpdateReportStatusRequestApiDTO.StatusEnum.ACCEPTED;
+        UpdateModerationStatusRequestApiDTO request = mock(UpdateModerationStatusRequestApiDTO.class);
+        UpdateModerationStatusRequestApiDTO.StatusEnum statusEnum =
+                UpdateModerationStatusRequestApiDTO.StatusEnum.ACCEPTED;
 
         when(request.getStatus()).thenReturn(statusEnum);
         when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -130,7 +130,7 @@ class ReportServiceTest {
         ReportApiDTO expectedDto = new ReportApiDTO();
         when(reportMapper.toReportDTO(report)).thenReturn(expectedDto);
 
-        ReportApiDTO result = reportService.updateReportStatus(reportId, request);
+        ReportApiDTO result = reportService.updateModerationStatus(reportId, request);
 
         assertNotNull(result);
         assertEquals(ModerationStatus.ACCEPTED, report.getModerationStatus());
@@ -150,9 +150,9 @@ class ReportServiceTest {
         report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
         report.setReportStatus(ReportStatus.PENDING);
 
-        UpdateReportStatusRequestApiDTO request = mock(UpdateReportStatusRequestApiDTO.class);
-        UpdateReportStatusRequestApiDTO.StatusEnum statusEnum =
-                UpdateReportStatusRequestApiDTO.StatusEnum.REJECTED;
+        UpdateModerationStatusRequestApiDTO request = mock(UpdateModerationStatusRequestApiDTO.class);
+        UpdateModerationStatusRequestApiDTO.StatusEnum statusEnum =
+                UpdateModerationStatusRequestApiDTO.StatusEnum.REJECTED;
 
         when(request.getStatus()).thenReturn(statusEnum);
         when(request.getRejectionReason()).thenReturn(rejectionReason);
@@ -162,11 +162,11 @@ class ReportServiceTest {
         ReportApiDTO expectedDto = new ReportApiDTO();
         when(reportMapper.toReportDTO(report)).thenReturn(expectedDto);
 
-        ReportApiDTO result = reportService.updateReportStatus(reportId, request);
+        ReportApiDTO result = reportService.updateModerationStatus(reportId, request);
 
         assertNotNull(result);
         assertEquals(ModerationStatus.REJECTED, report.getModerationStatus());
-        assertEquals(ReportStatus.REJECTED, report.getReportStatus());
+        assertEquals(ReportStatus.PENDING, report.getReportStatus());
         assertEquals(rejectionReason, report.getRejectionReason());
 
         verify(reportRepository).findById(reportId);
@@ -181,16 +181,16 @@ class ReportServiceTest {
         report.setId(reportId);
         report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
 
-        UpdateReportStatusRequestApiDTO request = mock(UpdateReportStatusRequestApiDTO.class);
-        UpdateReportStatusRequestApiDTO.StatusEnum statusEnum =
-                UpdateReportStatusRequestApiDTO.StatusEnum.REJECTED;
+        UpdateModerationStatusRequestApiDTO request = mock(UpdateModerationStatusRequestApiDTO.class);
+        UpdateModerationStatusRequestApiDTO.StatusEnum statusEnum =
+                UpdateModerationStatusRequestApiDTO.StatusEnum.REJECTED;
 
         when(request.getStatus()).thenReturn(statusEnum);
         when(request.getRejectionReason()).thenReturn(null);
         when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         assertThrows(ResponseStatusException.class,
-                () -> reportService.updateReportStatus(reportId, request));
+                () -> reportService.updateModerationStatus(reportId, request));
 
         verify(reportRepository, never()).save(any());
     }
@@ -211,7 +211,7 @@ class ReportServiceTest {
         when(reportRepository.save(any(Report.class))).thenReturn(report);
         when(reportMapper.toReportDTO(report)).thenReturn(expectedDto);
 
-        ReportApiDTO result = reportService.updateReportProgress(reportId, newStatus);
+        ReportApiDTO result = reportService.updateReportStatus(reportId, newStatus);
 
         assertNotNull(result);
         assertEquals(ReportStatus.IN_PROGRESS, report.getReportStatus());
@@ -238,7 +238,7 @@ class ReportServiceTest {
         when(reportRepository.save(any(Report.class))).thenReturn(report);
         when(reportMapper.toReportDTO(report)).thenReturn(expectedDto);
 
-        ReportApiDTO result = reportService.updateReportProgress(reportId, newStatus);
+        ReportApiDTO result = reportService.updateReportStatus(reportId, newStatus);
 
         assertNotNull(result);
         assertEquals(ReportStatus.RESOLVED, report.getReportStatus());
@@ -260,7 +260,7 @@ class ReportServiceTest {
         when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         assertThrows(ResponseStatusException.class,
-                () -> reportService.updateReportProgress(reportId, newStatus));
+                () -> reportService.updateReportStatus(reportId, newStatus));
 
         verify(reportRepository, never()).save(any());
     }
@@ -278,7 +278,7 @@ class ReportServiceTest {
         when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         assertThrows(ResponseStatusException.class,
-                () -> reportService.updateReportProgress(reportId, newStatus));
+                () -> reportService.updateReportStatus(reportId, newStatus));
 
         verify(reportRepository, never()).save(any());
     }
@@ -296,7 +296,7 @@ class ReportServiceTest {
         when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         assertThrows(ResponseStatusException.class,
-                () -> reportService.updateReportProgress(reportId, newStatus));
+                () -> reportService.updateReportStatus(reportId, newStatus));
 
         verify(reportRepository, never()).save(any());
     }
@@ -309,7 +309,7 @@ class ReportServiceTest {
         when(reportRepository.findById(reportId)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class,
-                () -> reportService.updateReportProgress(reportId, newStatus));
+                () -> reportService.updateReportStatus(reportId, newStatus));
 
         verify(reportRepository).findById(reportId);
         verify(reportRepository, never()).save(any());

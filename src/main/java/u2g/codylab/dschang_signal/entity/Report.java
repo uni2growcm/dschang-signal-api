@@ -1,12 +1,18 @@
 package u2g.codylab.dschang_signal.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import java.time.OffsetDateTime;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import java.sql.Timestamp;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "reports")
 public class Report {
@@ -21,20 +27,8 @@ public class Report {
     @Column(nullable = false)
     private String description;
 
-    // Relation Many-to-Many avec Category (via la table report_category)
-    @ManyToMany
-    @JoinTable(
-            name = "report_category",
-            joinColumns = @JoinColumn(name = "report_id"),
-            inverseJoinColumns = @JoinColumn(name = "category_id")
-    )
-    private Set<Category> categories = new HashSet<>();
-
     @Column(name = "location_text")
     private String locationText;
-
-    @Column(name = "photo_url")
-    private String photoUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "moderation_status", nullable = false)
@@ -47,28 +41,29 @@ public class Report {
     @Column(name = "rejection_reason")
     private String rejectionReason;
 
+    @CreationTimestamp
     @Column(updatable = false, nullable = false)
-    private OffsetDateTime createdAt;
+    private Timestamp createdAt;
 
     @Column(name = "reviewed_at")
-    private OffsetDateTime reviewedAt;
+    private Timestamp reviewedAt;
 
-    @Column(nullable = false)
-    private OffsetDateTime updatedAt;
+    @UpdateTimestamp
+    @Column(updatable = true, nullable = false)
+    private Timestamp updatedAt;
 
-    // Relation Many-to-One avec User (créateur du report)
     @ManyToOne
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = OffsetDateTime.now();
-        updatedAt = OffsetDateTime.now();
-    }
+    @OneToMany(mappedBy = "report")
+    private List<Media> media;
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now();
-    }
+    @ManyToMany
+    @JoinTable(
+            name = "report_category",
+            joinColumns = @JoinColumn(name = "report_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private Set<Category> categories = new HashSet<>();
 }

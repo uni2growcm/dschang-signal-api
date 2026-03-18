@@ -2,8 +2,6 @@ package u2g.codylab.dschang_signal.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.sql.Timestamp;
 import java.util.List;

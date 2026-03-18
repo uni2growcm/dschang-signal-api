@@ -3,37 +3,41 @@ package u2g.codylab.dschang_signal.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mapstruct.Named;
 import u2g.codylab.dschang_signal.dto.CategoryResponseApiDTO;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 import u2g.codylab.dschang_signal.entity.Category;
 import u2g.codylab.dschang_signal.entity.Report;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {CategoryMapper.class, UserMapper.class})
-public abstract class ReportMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {UserMapper.class, CategoryMapper.class})
+public interface ReportMapper {
 
-    @Autowired
-    protected CategoryMapper categoryMapper;
+    @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "timestampToOffsetDateTime")
+    @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "timestampToOffsetDateTime")
+    @Mapping(source = "reviewedAt", target = "reviewedAt", qualifiedByName = "timestampToOffsetDateTime")
+    @Mapping(target = "categories", source = "categories", qualifiedByName = "categoriesToDtoList")
+    ReportApiDTO toReportDTO(Report report);
 
-    @Mapping(target = "categories", expression = "java(mapCategoriesToDTO(report.getCategories()))")
-    @Mapping(target = "createdBy", source = "createdBy")
-    public abstract ReportApiDTO toReportDTO(Report report);
+    @Named("categoriesToDtoList")
+    default List<CategoryResponseApiDTO> categoriesToDtoList(Set<Category> categories) {
+        if (categories == null) return Collections.emptyList();
 
-    @Mapping(target = "moderationStatus", ignore = true)
-    @Mapping(target = "categories", ignore = true)
-    @Mapping(target = "createdBy", ignore = true)
-    public abstract Report toEntity(ReportApiDTO reportApiDTO);
-
-    protected List<CategoryResponseApiDTO> mapCategoriesToDTO(Set<Category> categories) {
-        if (categories == null || categories.isEmpty()) {
-            return List.of();
-        }
         return categories.stream()
-                .map(categoryMapper::toCategoryDto)
-                .collect(Collectors.toList());
+                .map(this::categoryToDto)
+                .toList();
+    }
+
+    default CategoryResponseApiDTO categoryToDto(Category category) {
+        if (category == null) return null;
+
+        CategoryResponseApiDTO dto = new CategoryResponseApiDTO();
+        dto.setId(category.getId());
+        dto.setName(category.getName());
+        dto.setColor(category.getColor());
+        return dto;
     }
 }

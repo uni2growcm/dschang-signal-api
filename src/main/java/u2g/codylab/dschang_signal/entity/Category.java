@@ -3,11 +3,10 @@ package u2g.codylab.dschang_signal.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -32,6 +31,6 @@ public class Category {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @OneToMany(mappedBy = "categories")
-    private List<Report> reports = new ArrayList<>();
+    @ManyToMany(mappedBy = "categories")
+    private Set<Report> reports = new HashSet<>();
 }
