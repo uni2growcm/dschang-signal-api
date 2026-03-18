@@ -15,6 +15,8 @@ import u2g.codylab.dschang_signal.mapper.CategoryMapper;
 import u2g.codylab.dschang_signal.repository.CategoryRepository;
 import u2g.codylab.dschang_signal.repository.UserRepository;
 
+import java.util.List;
+
 @Slf4j
 @Transactional
 @Service
@@ -23,23 +25,30 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
     private final UserRepository userRepository;
+    private final I18nService i18nService;
 
     public CategoryService(CategoryRepository categoryRepository,
                            CategoryMapper categoryMapper,
-                           UserRepository userRepository) {
+                           UserRepository userRepository,
+                           I18nService i18nService) {
         this.categoryRepository = categoryRepository;
         this.categoryMapper = categoryMapper;
         this.userRepository = userRepository;
+        this.i18nService = i18nService;
     }
 
     public CategoryResponseApiDTO createCategory(CategoryRequestApiDTO categoryRequestApiDTO, String email) {
         log.debug("Creating category: {}", categoryRequestApiDTO.getName());
 
         if (categoryRepository.findByName(categoryRequestApiDTO.getName()).isPresent())
-            throw new ConflictException("Category with name " + categoryRequestApiDTO.getName() + " already exists");
+            throw new ConflictException(
+                    i18nService.get("category.error.exists", categoryRequestApiDTO.getName())
+            );
 
         User creator = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("category.error.userNotFound", email)
+                ));
 
         Category category = categoryMapper.toEntity(categoryRequestApiDTO);
         category.setCreatedBy(creator);
@@ -54,6 +63,13 @@ public class CategoryService {
         }
     }
 
+    public List<CategoryResponseApiDTO> getAllCategories() {
+        return categoryRepository.findAll()
+                .stream()
+                .map(categoryMapper::toCategoryDto)
+                .toList();
+    }
+
     public void deleteCategory(Long id, String userEmail) {
         log.debug("Deleting category with id: {}", id);
 
@@ -61,13 +77,15 @@ public class CategoryService {
                 .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
 
         User currentUser = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("User not found with email: " + userEmail));
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("category.error.userNotFound", userEmail)
+                ));
 
         boolean isAdmin = currentUser.getRole().name().equals("ADMIN");
         boolean isCreator = category.getCreatedBy().getId().equals(currentUser.getId());
 
         if (!isAdmin && !isCreator) {
-            throw new ForbiddenException("You are not allowed to delete this category");
+            throw new ForbiddenException(i18nService.get("category.error.forbidden"));
         }
 
         categoryRepository.delete(category);

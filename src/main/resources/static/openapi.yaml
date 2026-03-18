@@ -299,7 +299,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+  /reports:
+    post:
+      operationId: createReport
+      tags: [ Report ]
+      summary: Create a new report
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+      responses:
+        '201':
+          description: Report created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
         operationId: deleteReport
         tags:
@@ -338,7 +369,130 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{id}/moderation-status:
+    patch:
+      operationId: updateModerationStatus
+      tags: [ Report ]
+      summary: Update report moderation status (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the report
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateModerationStatusRequest'
+      responses:
+        '200':
+          description: Report status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Admin only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{id}/report-status:
+    patch:
+      operationId: updateReportStatus
+      tags: [ Report ]
+      summary: Update report status (Admin only)
+      description: Update the progression status (PENDING, IN_PROGRESS, RESOLVED) of a specific report.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the report
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReportStatusRequest'
+      responses:
+        '200':
+          description: Report status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - User does not have ADMIN role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /categories:
+
+    get:
+        operationId: getAllCategories
+        tags:
+          - Category
+        summary: Get all categories
+        security:
+          - bearerAuth: [ ]
+        responses:
+          '200':
+            description: List of categories
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CategoryResponse'
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
     post:
       tags:
         - Category
@@ -542,7 +696,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [ PENDING_REVIEW, RESOLVED, REJECTED ]
+            enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
         - name: reportStatus
           in: query
           description: Filter by report status
@@ -659,6 +813,31 @@ components:
         default: 'fullName'
 
   schemas:
+    ReportRequest:
+      type: object
+      required:
+        - title
+        - description
+        - locationText
+      properties:
+        title:
+          type: string
+          example: "Pothole on Kennedy Avenue"
+          minLength: 3
+          maxLength: 150
+        description:
+          type: string
+          example: "Large dangerous pothole on the roadway"
+          minLength: 10
+        locationText:
+          type: string
+          example: "Kennedy Avenue, in front of the university"
+        categoryIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example: [ 1, 2 ]
     LoginRequest:
       type: object
       required:
@@ -708,6 +887,30 @@ components:
           type: string
           enum: [ ADMIN, CITIZEN ]
           example: CITIZEN
+
+    UpdateModerationStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
+          example: ACCEPTED
+        rejectionReason:
+          type: string
+          example: "Reporting outside area of jurisdiction"
+          description: Required if status is REJECTED
+
+    UpdateReportStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [ PENDING, IN_PROGRESS, RESOLVED ]
+          example: IN_PROGRESS
 
     User:
       type: object
@@ -761,7 +964,7 @@ components:
           example: "Kennedy Avenue, in front of the university"
         moderationStatus:
           type: string
-          enum: [ PENDING_REVIEW, RESOLVED, REJECTED ]
+          enum: [ PENDING_REVIEW, ACCEPTED, REJECTED ]
           example: "PENDING_REVIEW"
         reportStatus:
           type: string

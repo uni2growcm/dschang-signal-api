@@ -9,12 +9,11 @@ import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.entity.Report;
 import u2g.codylab.dschang_signal.entity.User;
 
-
 @Repository
 public interface ReportRepository extends JpaRepository<Report, Long> {
     Page<Report> findByModerationStatus (ModerationStatus moderationStatus, Pageable pageable);
+    boolean existsByTitleAndLocationText(String title, String locationText);
 
     @EntityGraph(attributePaths = {"createdBy"})
     Page<Report> findByCreatedBy(User createdBy, Pageable pageable);
-
 }
