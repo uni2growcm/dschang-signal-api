@@ -1,6 +1,5 @@
 package u2g.codylab.dschang_signal.controller;
 
-
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +15,8 @@ import java.util.List;
 public class MediaController implements MediaApi {
 
     private final MediaService mediaService;
-    public MediaController(MediaService mediaService){
+
+    public MediaController(MediaService mediaService) {
         this.mediaService = mediaService;
     }
 
@@ -24,12 +24,17 @@ public class MediaController implements MediaApi {
     public ResponseEntity<MediaResponseApiDTO> uploadMedia(
             Integer reportId,
             MultipartFile file,
-            String description
-    ) {
+            String description) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(mediaService.upload(reportId.longValue(), file, description));
     }
 
+    @Override
+    public ResponseEntity<List<MediaResponseApiDTO>> getReportMedias(Integer reportId) {
+        return ResponseEntity.ok(
+                mediaService.getMediasByReportId(reportId.longValue())
+        );
+    }
 
     @Override
     public ResponseEntity<List<MediaResponseApiDTO>> getAllMedia() {
@@ -41,12 +46,9 @@ public class MediaController implements MediaApi {
         return mediaService.getById(mediaId);
     }
 
-
     @Override
     public ResponseEntity<Void> deleteMedia(Integer mediaId) {
         mediaService.delete(mediaId);
         return ResponseEntity.noContent().build();
     }
 }
-
-

@@ -568,7 +568,33 @@ paths:
                 $ref: '#/components/schemas/MediaResponse'
         '404':
           description: Report not found
-
+    get:
+      operationId: getReportMedias
+      tags: [ Media ]
+      summary: Get all media files for a specific report
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of media files for the report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /media:
     get:
       operationId: getAllMedia
