@@ -10,6 +10,8 @@ import u2g.codylab.dschang_signal.dto.CategoryRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.CategoryResponseApiDTO;
 import u2g.codylab.dschang_signal.service.CategoryService;
 
+import java.util.List;
+
 @RestController
 public class CategoryController implements CategoryApi {
 
@@ -32,5 +34,11 @@ public class CategoryController implements CategoryApi {
         String email = authentication.getName();
         categoryService.deleteCategory(id, email);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @Override
+    public ResponseEntity<List<CategoryResponseApiDTO>> getAllCategories() {
+        List<CategoryResponseApiDTO> categories = categoryService.getAllCategories();
+        return ResponseEntity.ok(categories);
     }
 }
