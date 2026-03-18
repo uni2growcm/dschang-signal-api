@@ -2,6 +2,8 @@ package u2g.codylab.dschang_signal.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.List;
@@ -37,14 +39,16 @@ public class Report {
     private ReportStatus reportStatus;
 
     @Column(name = "rejection_reason")
-    private  String rejectionReason;
+    private String rejectionReason;
 
+    @CreationTimestamp
     @Column(updatable = false, nullable = false)
     private Timestamp createdAt;
 
     @Column(name = "reviewed_at")
     private Timestamp reviewedAt;
 
+    @UpdateTimestamp
     @Column(updatable = true, nullable = false)
     private Timestamp updatedAt;
 
