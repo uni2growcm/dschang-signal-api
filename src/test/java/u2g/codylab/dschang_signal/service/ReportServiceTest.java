@@ -94,10 +94,8 @@ class ReportServiceTest {
     void shouldThrowBadRequestWhenPaginationFails() {
         Pageable pageable = PageRequest.of(0, 10);
 
-        when(reportRepository.findByModerationStatus(
-                ModerationStatus.ACCEPTED,
-                pageable
-        )).thenThrow(new RuntimeException("DB error"));
+        when(reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED, pageable))
+                .thenThrow(new RuntimeException());
 
         assertThrows(BadRequestException.class, () -> reportService.getPublicReports(pageable));
     }

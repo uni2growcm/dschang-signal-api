@@ -10,7 +10,6 @@ import org.springframework.web.server.ResponseStatusException;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.dto.UpdateModerationStatusRequestApiDTO;
-import u2g.codylab.dschang_signal.dto.UpdateReportStatusRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.Report;
 import u2g.codylab.dschang_signal.entity.ReportStatus;
 import u2g.codylab.dschang_signal.entity.User;
@@ -29,16 +28,13 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final ReportMapper reportMapper;
-    private final UserService userService;
     private final I18nService i18nService;
 
     public ReportService(ReportRepository reportRepository,
                          ReportMapper reportMapper,
-                         UserService userService,
                          I18nService i18nService) {
         this.reportRepository = reportRepository;
         this.reportMapper = reportMapper;
-        this.userService = userService;
         this.i18nService = i18nService;
     }
 
@@ -62,7 +58,7 @@ public class ReportService {
             log.debug("Found {} reports by page {}", dtos.getTotalElements(), pageable);
             return dtos;
         } catch (Exception e) {
-            throw new BadRequestException("Invalid pagination parameters");
+            throw new BadRequestException(i18nService.get("report.error.pagination"));
         }
     }
 
@@ -75,8 +71,8 @@ public class ReportService {
             log.debug("Reports found: {}", reportsDTO);
             return reportsDTO;
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new BadRequestException("Error occurred while fetching reports");
+            log.error(e.getMessage());
+            throw new BadRequestException("report.error.unknown");
         }
     }
 
@@ -86,7 +82,7 @@ public class ReportService {
 
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Report with id " + id + " does not exist."
+                        HttpStatus.NOT_FOUND, i18nService.get("report.error.notFound", id)
                 ));
 
         ModerationStatus currentModStatus = report.getModerationStatus();
@@ -95,16 +91,15 @@ public class ReportService {
         if (currentModStatus != ModerationStatus.PENDING_REVIEW) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Cannot update moderation status. Current status is " + currentModStatus +
-                            ". Only PENDING_REVIEW reports can be moderated."
+                    i18nService.get("report.error.moderation.invalidStatus", currentModStatus)
             );
         }
 
         switch (newModStatus) {
             case ACCEPTED:
                 report.setModerationStatus(ModerationStatus.ACCEPTED);
-                report.setReportStatus(ReportStatus.PENDING); // ← CORRIGÉ: reste PENDING, pas IN_PROGRESS
-                report.setRejectionReason(null); // Effacer toute ancienne raison
+                report.setReportStatus(ReportStatus.PENDING);
+                report.setRejectionReason(null);
                 log.debug("Report {} accepted", id);
                 break;
 
@@ -113,13 +108,13 @@ public class ReportService {
                 if (rejectionReason == null || rejectionReason.isBlank()) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
-                            "A rejection reason is required when rejecting a report."
+                            i18nService.get("report.error.moderation.rejectionReasonRequired")
                     );
                 }
                 if (rejectionReason.length() < 5 || rejectionReason.length() > 500) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
-                            "Rejection reason must be between 5 and 500 characters."
+                            i18nService.get("report.error.moderation.rejectionReason.length")
                     );
                 }
 
@@ -132,8 +127,7 @@ public class ReportService {
             default:
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Invalid moderation status: " + newModStatus +
-                                ". Allowed values: ACCEPTED, REJECTED"
+                        i18nService.get("report.error.moderation.invalidValue", newModStatus)
                 );
         }
         Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -153,7 +147,7 @@ public class ReportService {
 
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Report with id " + id + " does not exist."
+                        HttpStatus.NOT_FOUND, i18nService.get("report.error.notFound", id)
                 ));
 
         ModerationStatus currentModStatus = report.getModerationStatus();
@@ -162,7 +156,7 @@ public class ReportService {
         if (currentModStatus != ModerationStatus.ACCEPTED) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    String.format("Cannot update progress status. Report is %s. Only ACCEPTED reports can have their status updated.",
+                    i18nService.get("report.error.status.notAccepted",
                             currentModStatus)
             );
         }
@@ -170,7 +164,7 @@ public class ReportService {
         if (currentRepStatus == ReportStatus.RESOLVED) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Cannot update progress status of a RESOLVED report. It's already completed."
+                    i18nService.get("report.error.status.alreadyResolved")
             );
         }
 
@@ -195,8 +189,7 @@ public class ReportService {
         if (!isValidTransition) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    String.format("Invalid status transition from %s to %s. Allowed: PENDING → IN_PROGRESS → RESOLVED",
-                            current, target)
+                    i18nService.get("report.error.status.invalidTransition", current, target)
             );
         }
     }
@@ -215,7 +208,7 @@ public class ReportService {
         }
 
         if (!ReportStatus.PENDING.equals(report.getReportStatus())) {
-            throw new BadRequestException("Report cannot be deleted because its status is not PENDING");
+            throw new BadRequestException(i18nService.get("report.error.delete.notPending"));
         }
 
         if (report.getMedia() != null) {
