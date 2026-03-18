@@ -72,7 +72,7 @@ public class ReportService {
             return reportsDTO;
         } catch (Exception e) {
             log.error(e.getMessage());
-            throw new BadRequestException("report.error.unknown");
+            throw new BadRequestException(i18nService.get("report.error.unknown"));
         }
     }
 
