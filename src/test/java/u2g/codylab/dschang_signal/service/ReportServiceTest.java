@@ -12,10 +12,11 @@ import u2g.codylab.dschang_signal.dto.UpdateModerationStatusRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.entity.Report;
 import u2g.codylab.dschang_signal.entity.ReportStatus;
+import u2g.codylab.dschang_signal.exception.BadRequestException;
+import u2g.codylab.dschang_signal.exception.NotFoundException;
 import u2g.codylab.dschang_signal.mapper.ReportMapper;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +32,12 @@ class ReportServiceTest {
     @Mock
     private ReportMapper reportMapper;
 
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private I18nService i18nService;
+
     @InjectMocks
     private ReportService reportService;
 
@@ -41,29 +48,23 @@ class ReportServiceTest {
 
         ReportApiDTO dto = new ReportApiDTO();
 
-        when(reportRepository.findById(1L))
-                .thenReturn(Optional.of(report));
-
-        when(reportMapper.toReportDTO(report))
-                .thenReturn(dto);
+        when(reportRepository.findById(1L)).thenReturn(Optional.of(report));
+        when(reportMapper.toReportDTO(report)).thenReturn(dto);
 
         ReportApiDTO result = reportService.getReportById(1L);
 
         assertNotNull(result);
-
         verify(reportRepository).findById(1L);
         verify(reportMapper).toReportDTO(report);
     }
 
     @Test
     void shouldThrowExceptionWhenReportNotFound() {
-        when(reportRepository.findById(1L))
-                .thenReturn(Optional.empty());
+        when(reportRepository.findById(1L)).thenReturn(Optional.empty());
+        when(i18nService.get(eq("report.error.notFound"), any()))
+                .thenReturn("Report not found with ID: 1");
 
-        assertThrows(
-                ResponseStatusException.class,
-                () -> reportService.getReportById(1L)
-        );
+        assertThrows(NotFoundException.class, () -> reportService.getReportById(1L));
 
         verify(reportRepository).findById(1L);
     }
@@ -77,26 +78,20 @@ class ReportServiceTest {
 
         Page<Report> page = new PageImpl<>(List.of(report));
 
-        when(reportRepository.findByModerationStatus(
-                ModerationStatus.ACCEPTED,
-                pageable
-        )).thenReturn(page);
-
+        when(reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED, pageable))
+                .thenReturn(page);
         when(reportMapper.toReportDTO(report)).thenReturn(dto);
 
         Page<ReportApiDTO> result = reportService.getPublicReports(pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
-
-        verify(reportRepository)
-                .findByModerationStatus(ModerationStatus.ACCEPTED, pageable);
-
+        verify(reportRepository).findByModerationStatus(ModerationStatus.ACCEPTED, pageable);
         verify(reportMapper).toReportDTO(report);
     }
 
     @Test
-    void shouldPropagateExceptionWhenRepositoryFails() {
+    void shouldThrowBadRequestWhenPaginationFails() {
         Pageable pageable = PageRequest.of(0, 10);
 
         when(reportRepository.findByModerationStatus(
@@ -104,10 +99,7 @@ class ReportServiceTest {
                 pageable
         )).thenThrow(new RuntimeException("DB error"));
 
-        assertThrows(
-                RuntimeException.class,
-                () -> reportService.getPublicReports(pageable)
-        );
+        assertThrows(BadRequestException.class, () -> reportService.getPublicReports(pageable));
     }
 
     @Test

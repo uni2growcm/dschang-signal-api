@@ -9,14 +9,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class StorageServiceImplTest {
 
     private StorageServiceImpl storageService;
+    private I18nService i18nService;
 
     @BeforeEach
     void setUp() {
-        storageService = new StorageServiceImpl();
+        i18nService = mock(I18nService.class);
+        when(i18nService.get(anyString(), any())).thenReturn("error message");
+
+        storageService = new StorageServiceImpl(i18nService);
 
         ReflectionTestUtils.setField(storageService, "basePath", "test-storage");
         ReflectionTestUtils.setField(storageService, "baseUrl", "http://localhost/files");
@@ -24,7 +32,6 @@ class StorageServiceImplTest {
 
     @Test
     void shouldStoreFileSuccessfully() {
-
         MockMultipartFile file =
                 new MockMultipartFile(
                         "file",
@@ -41,7 +48,6 @@ class StorageServiceImplTest {
 
     @Test
     void shouldDeleteFileSuccessfully() throws Exception {
-
         Path folder = Path.of("test-storage/image");
         Files.createDirectories(folder);
 

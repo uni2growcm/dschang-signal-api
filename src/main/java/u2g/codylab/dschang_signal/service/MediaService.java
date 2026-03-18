@@ -38,17 +38,19 @@ public class MediaService {
     private final StorageService storageService;
     private final UserRepository userRepository;
     private final ReportRepository reportRepository;
+    private final I18nService i18nService;
 
-    public MediaResponseApiDTO upload(Long reportId,MultipartFile file, String description) {
-        log.info("Uploading file: {}, size: {}",
-                file.getOriginalFilename(), file.getSize());
+    public MediaResponseApiDTO upload(Long reportId, MultipartFile file, String description) {
+        log.info("Uploading file: {}, size: {}", file.getOriginalFilename(), file.getSize());
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));
 
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new NotFoundException("Report not found: " + reportId));
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("report.error.notFound", reportId)
+                ));
 
         String mimeType = detectMimeType(file);
         String mediaType = resolveMediaType(mimeType);
@@ -79,10 +81,10 @@ public class MediaService {
     public ResponseEntity<Resource> getById(Integer mediaId) {
         Media media = mediaRepository.findById(mediaId.longValue())
                 .orElseThrow(() -> new NotFoundException(
-                        "Media avec l'id " + mediaId + " introuvable"));
+                        i18nService.get("media.error.notFound", mediaId)
+                ));
 
         Resource resource = storageService.load(media.getUrl());
-
         String contentType = media.getMimeType();
 
         return ResponseEntity.ok()
@@ -92,16 +94,14 @@ public class MediaService {
                 .body(resource);
     }
 
-
     public void delete(Integer mediaId) {
         Media media = mediaRepository.findById(mediaId.longValue())
                 .orElseThrow(() -> new BadRequestException(
-                        "Media with id " + mediaId + " not found"));
+                        i18nService.get("media.error.notFound", mediaId)
+                ));
         storageService.delete(media.getUrl());
         mediaRepository.delete(media);
     }
-
-
 
     private String detectMimeType(MultipartFile file) {
         String contentType = file.getContentType();
@@ -147,5 +147,3 @@ public class MediaService {
         return filename.substring(filename.lastIndexOf('.') + 1);
     }
 }
-
-
