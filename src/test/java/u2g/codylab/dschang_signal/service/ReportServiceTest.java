@@ -12,6 +12,7 @@ import u2g.codylab.dschang_signal.dto.UpdateReportStatusRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.entity.Report;
 import u2g.codylab.dschang_signal.entity.ReportStatus;
+import u2g.codylab.dschang_signal.exception.NotFoundException;
 import u2g.codylab.dschang_signal.mapper.ReportMapper;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
 
@@ -30,6 +31,12 @@ class ReportServiceTest {
 
     @Mock
     private ReportMapper reportMapper;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private I18nService i18nService;
 
     @InjectMocks
     private ReportService reportService;
@@ -60,10 +67,13 @@ class ReportServiceTest {
         when(reportRepository.findById(1L))
                 .thenReturn(Optional.empty());
 
-        assertThrows(
+        ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
                 () -> reportService.getReportById(1L)
         );
+
+        assertEquals(404, exception.getStatusCode().value());
+        assertTrue(exception.getReason().contains("not found"));
 
         verify(reportRepository).findById(1L);
     }
@@ -307,8 +317,9 @@ class ReportServiceTest {
         ReportStatus newStatus = ReportStatus.IN_PROGRESS;
 
         when(reportRepository.findById(reportId)).thenReturn(Optional.empty());
+        when(i18nService.get(anyString(), any())).thenReturn("Report not found");
 
-        assertThrows(ResponseStatusException.class,
+        assertThrows(NotFoundException.class,
                 () -> reportService.updateReportProgress(reportId, newStatus));
 
         verify(reportRepository).findById(reportId);

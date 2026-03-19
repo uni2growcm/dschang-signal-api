@@ -28,11 +28,14 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomLogoutHandler customLogoutHandler;
+    private final LocaleFilter localeFilter;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          CustomLogoutHandler customLogoutHandler) {
+                          CustomLogoutHandler customLogoutHandler,
+                          LocaleFilter localeFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.customLogoutHandler = customLogoutHandler;
+        this.localeFilter = localeFilter;
     }
 
     @Bean
@@ -69,8 +72,8 @@ public class SecurityConfig {
                                 response.setStatus(HttpServletResponse.SC_OK))
                         .permitAll()
                 )
-                .addFilterBefore(jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(localeFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

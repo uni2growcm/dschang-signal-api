@@ -1,7 +1,13 @@
 package u2g.codylab.dschang_signal.service;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import u2g.codylab.dschang_signal.dto.ChangeRoleRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdatePasswordRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdateUserRequestApiDTO;
@@ -12,29 +18,26 @@ import u2g.codylab.dschang_signal.exception.BadRequestException;
 import u2g.codylab.dschang_signal.exception.NotFoundException;
 import u2g.codylab.dschang_signal.mapper.UserMapper;
 import u2g.codylab.dschang_signal.repository.UserRepository;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.sql.Timestamp;
 
 @Slf4j
-@Transactional
 @Service
+@Transactional
 public class UserService {
 
     private final UserMapper userMapper;
     private final UserRepository userRepository;
+    private final I18nService i18nService;
 
-    public UserService(UserMapper userMapper, UserRepository userRepository) {
+    public UserService(UserMapper userMapper,
+                       UserRepository userRepository,
+                       I18nService i18nService) {
         this.userMapper = userMapper;
         this.userRepository = userRepository;
+        this.i18nService = i18nService;
     }
 
-    @Transactional(readOnly = true)
     public Page<UserApiDTO> getAllUsers(Pageable pageable) {
         log.debug("Request to get all Users");
         try {
@@ -47,21 +50,21 @@ public class UserService {
         }
     }
 
-    @Transactional(readOnly = true)
     public UserApiDTO getUserById(Long id) {
         log.debug("Request to fetch user by id");
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("L'utilisateur avec l'ID " + id + " n'existe pas."));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User with id " + id + " does not exist."
+                ));
         log.debug("User with id {} found", user.getId());
         return userMapper.toUserDTO(user);
     }
 
-    @Transactional
     public UserApiDTO changeUserRole(Long id, ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
         log.debug("Request to change role of user with id {}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "L'utilisateur avec l'ID " + id + " n'existe pas."
+                        HttpStatus.NOT_FOUND, "User with id " + id + " does not exist."
                 ));
         user.setRole(Role.valueOf(changeRoleRequestApiDTO.getRole().getValue()));
         User updatedUser = userRepository.save(user);
@@ -83,7 +86,6 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
     }
 
-    @Transactional
     public UserApiDTO updateUser(Long id, UpdateUserRequestApiDTO request, String currentUserEmail) {
         log.debug("Request to update user with id {}", id);
 
@@ -125,7 +127,6 @@ public class UserService {
         return userMapper.toUserDTO(updatedUser);
     }
 
-    @Transactional
     public void updatePassword(Long id, UpdatePasswordRequestApiDTO request, String currentUserEmail) {
         log.debug("Request to update password for user with id {}", id);
 

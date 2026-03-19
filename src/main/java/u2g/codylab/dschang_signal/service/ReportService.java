@@ -15,6 +15,8 @@ import u2g.codylab.dschang_signal.entity.Report;
 import u2g.codylab.dschang_signal.entity.ReportStatus;
 import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.exception.BadRequestException;
+import u2g.codylab.dschang_signal.exception.ForbiddenException;
+import u2g.codylab.dschang_signal.exception.NotFoundException;
 import u2g.codylab.dschang_signal.mapper.ReportMapper;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
 
@@ -27,10 +29,17 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final ReportMapper reportMapper;
+    private final UserService userService;
+    private final I18nService i18nService;
 
-    public ReportService(ReportRepository reportRepository, ReportMapper reportMapper) {
+    public ReportService(ReportRepository reportRepository,
+                         ReportMapper reportMapper,
+                         UserService userService,
+                         I18nService i18nService) {
         this.reportRepository = reportRepository;
         this.reportMapper = reportMapper;
+        this.userService = userService;
+        this.i18nService = i18nService;
     }
 
     @Transactional(readOnly = true)
@@ -44,7 +53,6 @@ public class ReportService {
         return reportMapper.toReportDTO(report);
     }
 
-    @Transactional(readOnly = true)
     public Page<ReportApiDTO> getPublicReports(Pageable pageable) {
         log.debug("Request to fetch all reports by page {}", pageable);
         try {
@@ -77,8 +85,8 @@ public class ReportService {
         log.debug("Request to update moderation status of report with id {}", id);
 
         Report report = reportRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "The report with id " + id + " does not exist."
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("report.error.notFound", id)
                 ));
 
         ModerationStatus currentModStatus = report.getModerationStatus();
@@ -125,8 +133,8 @@ public class ReportService {
         log.debug("Request to update progress status of report with id {} to {}", id, newStatus);
 
         Report report = reportRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "The report with id " + id + " does not exist."
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("report.error.notFound", id)
                 ));
 
         ModerationStatus currentModStatus = report.getModerationStatus();
@@ -136,13 +144,6 @@ public class ReportService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Cannot update progress status when moderation status is " + currentModStatus + ". Report must be ACCEPTED first."
-            );
-        }
-
-        if (currentRepStatus == ReportStatus.REJECTED) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Cannot update progress status of a rejected report"
             );
         }
 
@@ -179,5 +180,31 @@ public class ReportService {
         log.debug("Report with id {} progress status updated to {}", id, updated.getReportStatus());
 
         return reportMapper.toReportDTO(updated);
+    }
+
+    @Transactional
+    public void deleteReport(Long id, User currentUser) {
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("report.error.notFound", id)
+                ));
+
+        if (!report.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new ForbiddenException(
+                    i18nService.get("category.error.forbidden")
+            );
+        }
+
+        if (!ReportStatus.PENDING.equals(report.getReportStatus())) {
+            throw new BadRequestException("Report cannot be deleted because its status is not PENDING");
+        }
+
+        if (report.getMedia() != null) {
+            report.getMedia().forEach(media -> media.setReport(null));
+            report.getMedia().clear();
+        }
+
+        reportRepository.delete(report);
+        log.debug("Report with id {} deleted successfully", id);
     }
 }

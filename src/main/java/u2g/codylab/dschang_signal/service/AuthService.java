@@ -23,16 +23,20 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final I18nService i18nService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       I18nService i18nService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.i18nService = i18nService;
     }
 
     public void register(RegisterRequestApiDTO dto) {
         log.info("Registering user: {}", dto.getEmail());
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new ConflictException("Email already in use: " + dto.getEmail());
+            throw new ConflictException(i18nService.get("register.error.email"));
         }
         User user = new User();
         user.setEmail(dto.getEmail());
@@ -49,9 +53,9 @@ public class AuthService {
     public User login(LoginRequestApiDTO dto) {
         log.info("Login attempt for: {}", dto.getEmail());
         User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new BadRequestException("Invalid credentials"));
+                .orElseThrow(() -> new BadRequestException(i18nService.get("login.error.credentials")));
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-            throw new UnauthorizedException("Invalid credentials");
+            throw new BadRequestException(i18nService.get("login.error.credentials"));
         }
         return user;
     }

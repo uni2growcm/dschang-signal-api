@@ -5,6 +5,8 @@ import lombok.Data;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -21,7 +23,6 @@ public class Report {
     @Column(nullable = false)
     private String description;
 
-    // Relation Many-to-Many avec Category (via la table report_category)
     @ManyToMany
     @JoinTable(
             name = "report_category",
@@ -56,10 +57,12 @@ public class Report {
     @Column(nullable = false)
     private OffsetDateTime updatedAt;
 
-    // Relation Many-to-One avec User (créateur du report)
     @ManyToOne
     @JoinColumn(name = "created_by")
     private User createdBy;
+
+    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Media> media = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
