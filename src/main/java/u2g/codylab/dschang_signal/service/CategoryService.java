@@ -15,6 +15,8 @@ import u2g.codylab.dschang_signal.mapper.CategoryMapper;
 import u2g.codylab.dschang_signal.repository.CategoryRepository;
 import u2g.codylab.dschang_signal.repository.UserRepository;
 
+import java.util.List;
+
 @Slf4j
 @Transactional
 @Service
@@ -59,6 +61,13 @@ public class CategoryService {
             log.error("Error while creating category: {}", categoryRequestApiDTO.getName(), e);
             throw new BadRequestException("Error occurred while creating category, Please try again");
         }
+    }
+
+    public List<CategoryResponseApiDTO> getAllCategories() {
+        return categoryRepository.findAll()
+                .stream()
+                .map(categoryMapper::toCategoryDto)
+                .toList();
     }
 
     public void deleteCategory(Long id, String userEmail) {

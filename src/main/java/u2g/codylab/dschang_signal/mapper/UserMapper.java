@@ -1,33 +1,36 @@
 package u2g.codylab.dschang_signal.mapper;
 
-import u2g.codylab.dschang_signal.dto.UserApiDTO;
-import u2g.codylab.dschang_signal.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
+import u2g.codylab.dschang_signal.dto.UserApiDTO;
+import u2g.codylab.dschang_signal.entity.User;
 
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserMapper {
-    @Mapping(target = "password", ignore = true)
-    @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "timestampToOffsetDateTime")
-    @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "timestampToOffsetDateTime")
+
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     UserApiDTO toUserDTO(User user);
 
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     @Mapping(target = "reports", ignore = true)
-    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "categories", ignore = true)
     @Mapping(target = "media", ignore = true)
-    User toEntity(UserApiDTO user);
+    User toEntity(UserApiDTO userApiDTO);
 
-    @Named("timestampToOffsetDateTime")
-    default OffsetDateTime timestampToOffsetDateTime(Timestamp timestamp) {
+    default OffsetDateTime map(Timestamp timestamp) {
         if (timestamp == null) return null;
-        return timestamp.toLocalDateTime().atOffset(OffsetDateTime.now().getOffset());
+        return timestamp.toInstant().atOffset(ZoneOffset.UTC);
     }
 
+    default Timestamp map(OffsetDateTime offsetDateTime) {
+        if (offsetDateTime == null) return null;
+        return Timestamp.from(offsetDateTime.toInstant());
+    }
 }

@@ -1,14 +1,17 @@
 package u2g.codylab.dschang_signal.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import java.time.OffsetDateTime;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.ArrayList;
-import java.util.List;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "reports")
 public class Report {
@@ -34,9 +37,6 @@ public class Report {
     @Column(name = "location_text")
     private String locationText;
 
-    @Column(name = "photo_url")
-    private String photoUrl;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "moderation_status", nullable = false)
     private ModerationStatus moderationStatus;
@@ -48,30 +48,21 @@ public class Report {
     @Column(name = "rejection_reason")
     private String rejectionReason;
 
+    @CreationTimestamp
     @Column(updatable = false, nullable = false)
-    private OffsetDateTime createdAt;
+    private Timestamp createdAt;
 
     @Column(name = "reviewed_at")
-    private OffsetDateTime reviewedAt;
+    private Timestamp reviewedAt;
 
-    @Column(nullable = false)
-    private OffsetDateTime updatedAt;
+    @UpdateTimestamp
+    @Column(updatable = true, nullable = false)
+    private Timestamp updatedAt;
 
     @ManyToOne
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Media> media = new ArrayList<>();
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = OffsetDateTime.now();
-        updatedAt = OffsetDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now();
-    }
+    @OneToMany(mappedBy = "report")
+    private Set<Media> media = new HashSet<>();
 }

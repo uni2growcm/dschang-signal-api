@@ -28,6 +28,7 @@ public class AuthController implements AuthApi {
         this.jwtService = jwtService;
         this.tokenBlacklistService = tokenBlacklistService;
     }
+
     @Override
     public ResponseEntity<AuthResponseApiDTO> login(LoginRequestApiDTO loginRequestApiDTO) {
         User user = authService.login(loginRequestApiDTO);

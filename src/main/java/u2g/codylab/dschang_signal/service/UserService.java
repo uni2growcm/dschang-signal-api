@@ -1,13 +1,11 @@
 package u2g.codylab.dschang_signal.service;
 
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import u2g.codylab.dschang_signal.dto.ChangeRoleRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdatePasswordRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdateUserRequestApiDTO;
@@ -15,27 +13,32 @@ import u2g.codylab.dschang_signal.dto.UserApiDTO;
 import u2g.codylab.dschang_signal.entity.Role;
 import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.exception.BadRequestException;
+import u2g.codylab.dschang_signal.exception.ForbiddenException;
 import u2g.codylab.dschang_signal.exception.NotFoundException;
 import u2g.codylab.dschang_signal.mapper.UserMapper;
 import u2g.codylab.dschang_signal.repository.UserRepository;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 
 @Slf4j
-@Service
 @Transactional
+@Service
 public class UserService {
 
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final I18nService i18nService;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(UserMapper userMapper,
                        UserRepository userRepository,
-                       I18nService i18nService) {
+                       I18nService i18nService,
+                       PasswordEncoder passwordEncoder) {
         this.userMapper = userMapper;
         this.userRepository = userRepository;
         this.i18nService = i18nService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Page<UserApiDTO> getAllUsers(Pageable pageable) {
@@ -53,29 +56,19 @@ public class UserService {
     public UserApiDTO getUserById(Long id) {
         log.debug("Request to fetch user by id");
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User with id " + id + " does not exist."
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("user.error.notFound", id)
                 ));
         log.debug("User with id {} found", user.getId());
         return userMapper.toUserDTO(user);
     }
 
-    public UserApiDTO changeUserRole(Long id, ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
-        log.debug("Request to change role of user with id {}", id);
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User with id " + id + " does not exist."
-                ));
-        user.setRole(Role.valueOf(changeRoleRequestApiDTO.getRole().getValue()));
-        User updatedUser = userRepository.save(user);
-        log.debug("Role of user with id {} changed to {}", id, updatedUser.getRole());
-        return userMapper.toUserDTO(updatedUser);
-    }
-
     public UserApiDTO getUserByEmail(String email) {
         log.debug("Request to fetch user by email: {}", email);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("user.error.notFoundEmail", email)
+                ));
         log.debug("User with email {} found", user.getEmail());
         return userMapper.toUserDTO(user);
     }
@@ -83,86 +76,85 @@ public class UserService {
     public User getUserEntityByEmail(String email) {
         log.debug("Request to fetch user entity by email: {}", email);
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("user.error.notFoundEmail", email)
+                ));
     }
 
     public UserApiDTO updateUser(Long id, UpdateUserRequestApiDTO request, String currentUserEmail) {
-        log.debug("Request to update user with id {}", id);
+        log.debug("Request to update user with id: {}", id);
 
-        User currentUser = getUserEntityByEmail(currentUserEmail);
-        if (!currentUser.getId().equals(id)) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "You can only update your own profile"
-            );
-        }
-
-        User userToUpdate = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "User with id " + id + " not found"
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("user.error.notFound", id)
                 ));
 
-        if (request.getEmail() != null && !request.getEmail().equals(userToUpdate.getEmail())) {
-            userRepository.findByEmail(request.getEmail()).ifPresent(existingUser -> {
-                if (!existingUser.getId().equals(id)) {
-                    throw new ResponseStatusException(
-                            HttpStatus.CONFLICT,
-                            "Email already in use"
-                    );
-                }
-            });
-            userToUpdate.setEmail(request.getEmail());
+        User currentUser = getUserEntityByEmail(currentUserEmail);
+
+        if (!currentUser.getRole().equals(Role.ADMIN) && !currentUser.getId().equals(id)) {
+            throw new ForbiddenException(i18nService.get("user.error.forbidden"));
         }
 
-        if (request.getFullName() != null) {
-            userToUpdate.setFullName(request.getFullName());
+        if (request.getFullName() != null && !request.getFullName().isBlank()) {
+            user.setFullName(request.getFullName());
         }
 
-        userToUpdate.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+        user.setUpdatedAt(Timestamp.from(Instant.now()));
 
-        User updatedUser = userRepository.save(userToUpdate);
-        log.debug("User with id {} updated successfully", id);
+        User updatedUser = userRepository.save(user);
+        log.debug("User with id {} updated", id);
 
         return userMapper.toUserDTO(updatedUser);
     }
 
     public void updatePassword(Long id, UpdatePasswordRequestApiDTO request, String currentUserEmail) {
-        log.debug("Request to update password for user with id {}", id);
+        log.debug("Request to update password for user with id: {}", id);
 
-        User currentUser = getUserEntityByEmail(currentUserEmail);
-        if (!currentUser.getId().equals(id)) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "You can only update your own password"
-            );
-        }
-
-        User userToUpdate = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "User with id " + id + " not found"
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("user.error.notFound", id)
                 ));
 
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        if (!passwordEncoder.matches(request.getCurrentPassword(), userToUpdate.getPassword())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Current password is incorrect"
-            );
+        User currentUser = getUserEntityByEmail(currentUserEmail);
+
+        if (!currentUser.getRole().equals(Role.ADMIN) && !currentUser.getId().equals(id)) {
+            throw new ForbiddenException(i18nService.get("user.error.forbidden"));
         }
 
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "New password and confirmation do not match"
-            );
+        if (!currentUser.getRole().equals(Role.ADMIN)) {
+            if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                throw new BadRequestException(i18nService.get("user.error.invalidCurrentPassword"));
+            }
         }
 
-        userToUpdate.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userToUpdate.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setUpdatedAt(Timestamp.from(Instant.now()));
 
-        userRepository.save(userToUpdate);
-        log.debug("Password updated successfully for user with id {}", id);
+        userRepository.save(user);
+        log.debug("Password updated for user with id: {}", id);
+    }
+
+    public UserApiDTO changeUserRole(Long id, ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
+        log.debug("Request to change role of user with id {}", id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("user.error.notFound", id)
+                ));
+        user.setRole(Role.valueOf(changeRoleRequestApiDTO.getRole().getValue()));
+        User updatedUser = userRepository.save(user);
+        log.debug("Role of user with id {} changed to {}", id, updatedUser.getRole());
+        return userMapper.toUserDTO(updatedUser);
+    }
+
+    public void deleteUser(Long id) {
+        log.debug("Request to delete user with id: {}", id);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("user.error.notFound", id)
+                ));
+
+        userRepository.delete(user);
+        log.debug("User with id {} deleted", id);
     }
 }

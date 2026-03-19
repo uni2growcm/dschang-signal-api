@@ -18,12 +18,13 @@ import u2g.codylab.dschang_signal.dto.RegisterRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.Role;
 import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.repository.UserRepository;
+import u2g.codylab.dschang_signal.service.JwtService;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc(addFilters = true)
 @ActiveProfiles("test")
 class AuthIntegrationTest {
 
@@ -37,6 +38,9 @@ class AuthIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtService jwtService;
 
     @BeforeEach
     void setup() {
@@ -86,7 +90,7 @@ class AuthIntegrationTest {
         ChangeRoleRequestApiDTO dto = new ChangeRoleRequestApiDTO();
         dto.setRole(ChangeRoleRequestApiDTO.RoleEnum.ADMIN);
 
-        mockMvc.perform(patch("/api/users/1/role")
+        mockMvc.perform(put("/api/users/1/role")
                         .header("Authorization", "Bearer invalidToken")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
@@ -94,14 +98,16 @@ class AuthIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@test.com", roles = {"ADMIN"})
     void shouldChangeRoleWithValidToken() throws Exception {
         Long adminId = userRepository.findByEmail("admin@test.com").get().getId();
 
         ChangeRoleRequestApiDTO changeRole = new ChangeRoleRequestApiDTO();
         changeRole.setRole(ChangeRoleRequestApiDTO.RoleEnum.ADMIN);
 
-        mockMvc.perform(patch("/api/users/" + adminId + "/role")
+        String token = jwtService.generateToken("admin@test.com");
+
+        mockMvc.perform(put("/api/users/" + adminId + "/role")
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(changeRole)))
                 .andExpect(status().isOk());

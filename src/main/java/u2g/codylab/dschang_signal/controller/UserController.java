@@ -1,88 +1,81 @@
 package u2g.codylab.dschang_signal.controller;
 
-import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import u2g.codylab.dschang_signal.api.UserApi;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 import u2g.codylab.dschang_signal.dto.ChangeRoleRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdatePasswordRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UpdateUserRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UserApiDTO;
 import u2g.codylab.dschang_signal.service.UserService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
+@Slf4j
 @RestController
-public class UserController implements UserApi {
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
 
     private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<UserApiDTO>> getAllUsers(@PageableDefault(size = 20) Pageable pageable) {
+        log.debug("REST request to get all users");
+        return ResponseEntity.ok(userService.getAllUsers(pageable));
     }
 
-    @Override
-    public ResponseEntity<List<UserApiDTO>> getAllUsers(Integer page, Integer size, String sort) {
-
-        int p = (page != null) ? page : 0;
-        int s = (size != null) ? size : 20;
-        String st = (sort != null) ? sort : "id";
-
-        Pageable pageable = PageRequest.of(p, s, Sort.by(st));
-        Page<UserApiDTO> usersPage = userService.getAllUsers(pageable);
-        return new ResponseEntity<>(usersPage.getContent(), HttpStatus.OK);
-    }
-
-    @Override
-    public ResponseEntity<UserApiDTO> getUserById(Long id) {
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @userSecurity.isCurrentUser(#id)")
+    public ResponseEntity<UserApiDTO> getUserById(@PathVariable Long id) {
+        log.debug("REST request to get user by id: {}", id);
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @Override
+    @GetMapping("/me")
+    public ResponseEntity<UserApiDTO> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        log.debug("REST request to get current user");
+        return ResponseEntity.ok(userService.getUserByEmail(userDetails.getUsername()));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @userSecurity.isCurrentUser(#id)")
+    public ResponseEntity<UserApiDTO> updateUser(@PathVariable Long id,
+                                                 @RequestBody UpdateUserRequestApiDTO request,
+                                                 @AuthenticationPrincipal UserDetails userDetails) {
+        log.debug("REST request to update user: {}", id);
+        return ResponseEntity.ok(userService.updateUser(id, request, userDetails.getUsername()));
+    }
+
+    @PutMapping("/{id}/password")
+    @PreAuthorize("hasRole('ADMIN') or @userSecurity.isCurrentUser(#id)")
+    public ResponseEntity<Void> updatePassword(@PathVariable Long id,
+                                               @RequestBody UpdatePasswordRequestApiDTO request,
+                                               @AuthenticationPrincipal UserDetails userDetails) {
+        log.debug("REST request to update password for user: {}", id);
+        userService.updatePassword(id, request, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserApiDTO> changeUserRoleAdmin(@PathVariable("id") Long id,
-                                                          @Valid @RequestBody ChangeRoleRequestApiDTO changeRoleRequestApiDTO) {
-        return ResponseEntity.ok(userService.changeUserRole(id, changeRoleRequestApiDTO));
+    public ResponseEntity<UserApiDTO> changeUserRole(@PathVariable Long id,
+                                                     @RequestBody ChangeRoleRequestApiDTO request) {
+        log.debug("REST request to change role for user: {}", id);
+        return ResponseEntity.ok(userService.changeUserRole(id, request));
     }
 
-    @Override
-    public ResponseEntity<UserApiDTO> getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        return ResponseEntity.ok(userService.getUserByEmail(email));
-    }
-
-    @Override
-    public ResponseEntity<UserApiDTO> updateUser(
-            @PathVariable("id") Long id,
-            @Valid @RequestBody UpdateUserRequestApiDTO updateUserRequestApiDTO) {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserEmail = authentication.getName();
-
-        UserApiDTO updatedUser = userService.updateUser(id, updateUserRequestApiDTO, currentUserEmail);
-        return ResponseEntity.ok(updatedUser);
-    }
-
-    @Override
-    public ResponseEntity<Void> updatePassword(
-            @PathVariable("id") Long id,
-            @Valid @RequestBody UpdatePasswordRequestApiDTO updatePasswordRequestApiDTO) {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserEmail = authentication.getName();
-
-        userService.updatePassword(id, updatePasswordRequestApiDTO, currentUserEmail);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        log.debug("REST request to delete user: {}", id);
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -104,18 +104,18 @@ class SecurityConfigTest {
         }
 
         @Test
-        @DisplayName("PATCH /api/reports/{id}/status without token — 401")
-        void patchReportStatus_WithoutToken_Returns401() throws Exception {
-            mockMvc.perform(patch("/api/reports/1/status")
+        @DisplayName("PUT /api/reports/{id}/status without token — 401")
+        void putReportStatus_WithoutToken_Returns401() throws Exception {
+            mockMvc.perform(put("/api/reports/1/status")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"status\":\"RESOLVED\"}"))
                     .andExpect(status().isUnauthorized());
         }
 
         @Test
-        @DisplayName("PATCH /api/users/{id}/role without token — 401")
-        void patchUserRole_WithoutToken_Returns401() throws Exception {
-            mockMvc.perform(patch("/api/users/1/role")
+        @DisplayName("PUT /api/users/{id}/role without token — 401")
+        void putUserRole_WithoutToken_Returns401() throws Exception {
+            mockMvc.perform(put("/api/users/1/role")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"role\":\"ADMIN\"}"))
                     .andExpect(status().isUnauthorized());
@@ -137,10 +137,10 @@ class SecurityConfigTest {
 
         @Test
         @WithMockUser(roles = "CITIZEN")
-        @DisplayName("GET /api/users with CITIZEN token — 2xx")
-        void getUsers_WithCitizenToken_IsAuthorized() throws Exception {
+        @DisplayName("GET /api/users with CITIZEN token — 403 (FORBIDDEN car seul ADMIN peut voir les users)")
+        void getUsers_WithCitizenToken_IsForbidden() throws Exception {
             mockMvc.perform(get("/api/users"))
-                    .andExpect(status().is2xxSuccessful());
+                    .andExpect(status().isForbidden());
         }
 
         @Test
@@ -158,10 +158,10 @@ class SecurityConfigTest {
 
         @Test
         @WithMockUser(roles = "CITIZEN")
-        @DisplayName("PATCH /api/reports/{id}/status with CITIZEN token — 403")
+        @DisplayName("PUT /api/reports/{id}/status with CITIZEN token — 403")
         @Disabled("En attente de données de test pour le report avec ID 1")
-        void patchReportStatus_WithCitizenToken_Returns403() throws Exception {
-            mockMvc.perform(patch("/api/reports/1/status")
+        void putReportStatus_WithCitizenToken_Returns403() throws Exception {
+            mockMvc.perform(put("/api/reports/1/status")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"status\":\"RESOLVED\"}"))
                     .andExpect(status().isForbidden());
@@ -169,9 +169,9 @@ class SecurityConfigTest {
 
         @Test
         @WithMockUser(roles = "CITIZEN")
-        @DisplayName("PATCH /api/users/{id}/role with CITIZEN token — 403")
-        void patchUserRole_WithCitizenToken_Returns403() throws Exception {
-            mockMvc.perform(patch("/api/users/1/role")
+        @DisplayName("PUT /api/users/{id}/role with CITIZEN token — 403")
+        void putUserRole_WithCitizenToken_Returns403() throws Exception {
+            mockMvc.perform(put("/api/users/1/role")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"role\":\"ADMIN\"}"))
                     .andExpect(status().isForbidden());
@@ -179,9 +179,9 @@ class SecurityConfigTest {
 
         @Test
         @WithMockUser(roles = "ADMIN")
-        @DisplayName("PATCH /api/reports/{id}/status with ADMIN token — not 401/403")
-        void patchReportStatus_WithAdminToken_IsAuthorized() throws Exception {
-            ResultActions result = mockMvc.perform(patch("/api/reports/1/status")
+        @DisplayName("PUT /api/reports/{id}/status with ADMIN token — not 401/403")
+        void putReportStatus_WithAdminToken_IsAuthorized() throws Exception {
+            ResultActions result = mockMvc.perform(put("/api/reports/1/status")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"status\":\"RESOLVED\"}"));
 
@@ -190,9 +190,9 @@ class SecurityConfigTest {
 
         @Test
         @WithMockUser(roles = "ADMIN")
-        @DisplayName("PATCH /api/users/{id}/role with ADMIN token — not 401/403")
-        void patchUserRole_WithAdminToken_IsAuthorized() throws Exception {
-            ResultActions result = mockMvc.perform(patch("/api/users/1/role")
+        @DisplayName("PUT /api/users/{id}/role with ADMIN token — not 401/403")
+        void putUserRole_WithAdminToken_IsAuthorized() throws Exception {
+            ResultActions result = mockMvc.perform(put("/api/users/1/role")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"role\":\"CITIZEN\"}"));
 
@@ -230,10 +230,10 @@ class SecurityConfigTest {
 
         @Test
         @WithMockUser(roles = "CITIZEN")
-        @DisplayName("Valid token — filter authenticates user — 2xx")
+        @DisplayName("Valid token — filter authenticates user — 403 (car seul ADMIN peut voir les users)")
         void validToken_FilterAuthenticatesUser() throws Exception {
             mockMvc.perform(get("/api/users"))
-                    .andExpect(status().is2xxSuccessful());
+                    .andExpect(status().isForbidden());
         }
     }
 }

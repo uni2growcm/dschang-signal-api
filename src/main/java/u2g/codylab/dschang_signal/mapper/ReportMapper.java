@@ -2,38 +2,39 @@ package u2g.codylab.dschang_signal.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.springframework.beans.factory.annotation.Autowired;
-import u2g.codylab.dschang_signal.dto.CategoryResponseApiDTO;
+import org.mapstruct.ReportingPolicy;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
-import u2g.codylab.dschang_signal.entity.Category;
 import u2g.codylab.dschang_signal.entity.Report;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.sql.Timestamp;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {CategoryMapper.class, UserMapper.class})
-public abstract class ReportMapper {
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface ReportMapper {
 
-    @Autowired
-    protected CategoryMapper categoryMapper;
-
-    @Mapping(target = "categories", expression = "java(mapCategoriesToDTO(report.getCategories()))")
-    @Mapping(target = "createdBy", source = "createdBy")
-    public abstract ReportApiDTO toReportDTO(Report report);
-
-    @Mapping(target = "moderationStatus", ignore = true)
-    @Mapping(target = "categories", ignore = true)
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
+    @Mapping(target = "reviewedAt", source = "reviewedAt")
     @Mapping(target = "createdBy", ignore = true)
-    public abstract Report toEntity(ReportApiDTO reportApiDTO);
+    @Mapping(target = "categories", ignore = true)
+    ReportApiDTO toReportDTO(Report report);
 
-    protected List<CategoryResponseApiDTO> mapCategoriesToDTO(Set<Category> categories) {
-        if (categories == null || categories.isEmpty()) {
-            return List.of();
-        }
-        return categories.stream()
-                .map(categoryMapper::toCategoryDto)
-                .collect(Collectors.toList());
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
+    @Mapping(target = "reviewedAt", source = "reviewedAt")
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "categories", ignore = true)
+    @Mapping(target = "media", ignore = true)
+    Report toEntity(ReportApiDTO reportApiDTO);
+
+    default OffsetDateTime map(Timestamp timestamp) {
+        if (timestamp == null) return null;
+        return timestamp.toInstant().atOffset(ZoneOffset.UTC);
+    }
+
+    default Timestamp map(OffsetDateTime offsetDateTime) {
+        if (offsetDateTime == null) return null;
+        return Timestamp.from(offsetDateTime.toInstant());
     }
 }
