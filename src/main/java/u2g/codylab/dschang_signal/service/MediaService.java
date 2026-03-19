@@ -96,8 +96,6 @@ public class MediaService {
                 .orElseThrow(() -> new NotFoundException(
                         i18nService.get("media.error.notFound", mediaId)
                 ));
-                        "Media with id " + mediaId + " not found"
-                ));
 
         Resource resource = storageService.load(media.getUrl());
         String contentType = media.getMimeType();
