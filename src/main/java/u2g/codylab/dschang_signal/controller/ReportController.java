@@ -76,6 +76,16 @@ public class ReportController implements ReportApi {
     }
 
     @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ReportApiDTO> updateReport(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody ReportRequestApiDTO reportRequestApiDTO) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userService.getUserEntityByEmail(email);
+        return ResponseEntity.ok(reportService.updateReport(id, reportRequestApiDTO, currentUser));
+    }
+
+    @Override
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ReportApiDTO> updateModerationStatus(
             @PathVariable("id") Long id,
