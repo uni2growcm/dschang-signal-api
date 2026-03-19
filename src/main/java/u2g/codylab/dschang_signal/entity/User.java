@@ -82,4 +82,8 @@ public class User {
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public Long getId() {
+        return id;
+    }
 }

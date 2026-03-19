@@ -15,6 +15,7 @@ tags:
   - name: User
   - name: Report
   - name: Category
+  - name: Media
 
 paths:
   /login:
@@ -44,7 +45,7 @@ paths:
       tags: [ Auth ]
       summary: Register a new user
       security:
-        - basicAuth: [ ]
+        - basicAuth: []
       requestBody:
         required: true
         content:
@@ -63,12 +64,12 @@ paths:
       tags: [ Auth ]
       summary: Logout user
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       responses:
         '200':
           description: Successfully logged out
         '401':
-          description: Unauthorized - missing or invalid token
+          description: Unauthorized
           content:
             application/json:
               schema:
@@ -202,6 +203,7 @@ paths:
         - name: id
           in: path
           required: true
+          description: Unique identifier of the user
           schema:
             type: integer
             format: int64
@@ -298,13 +300,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
   /reports/public:
     get:
       operationId: getPublicReports
       tags: [ Report ]
       summary: Get all validated reports
-      security: [ ]
+      security: []
       parameters:
         - name: page
           in: query
@@ -332,21 +333,22 @@ paths:
                   $ref: '#/components/schemas/Report'
 
   /reports/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: ID of the report
     get:
       operationId: getReportById
       tags: [ Report ]
-      summary: Get a specific report by ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-            example: 1
+      summary: Get a report by ID
+      security: []
       responses:
         '200':
-          description: Report found successfully
+          description: Successful response
           content:
             application/json:
               schema:
@@ -357,27 +359,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
     delete:
       operationId: deleteReport
       tags: [ Report ]
       summary: Delete a report
       description: Only the author of the report can delete it, and only if the report status is PENDING.
       security:
-        - bearerAuth: [ ]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID of the report to delete
-          schema:
-            type: integer
-            format: int64
+        - bearerAuth: []
       responses:
         '204':
           description: Report deleted successfully
@@ -406,7 +394,7 @@ paths:
       tags: [ Report ]
       summary: Create a new report
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -442,6 +430,7 @@ paths:
         - name: id
           in: path
           required: true
+          description: Unique identifier of the report
           schema:
             type: integer
             format: int64
@@ -488,6 +477,7 @@ paths:
         - name: id
           in: path
           required: true
+          description: Unique identifier of the report
           schema:
             type: integer
             format: int64
@@ -684,7 +674,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
   /categories/{id}:
     delete:
       operationId: deleteCategory
@@ -757,6 +746,34 @@ paths:
         '404':
           description: Report not found
 
+    get:
+      operationId: getReportMedias
+      tags: [ Media ]
+      summary: Get all media files for a specific report
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of media files for the report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /media:
     get:
       operationId: getAllMedia
@@ -790,7 +807,7 @@ paths:
       operationId: getMediaById
       tags: [ Media ]
       summary: Get a media file by id
-      security: [ ]
+      security: []
       parameters:
         - name: mediaId
           in: path
@@ -858,6 +875,31 @@ components:
         default: 'fullName'
 
   schemas:
+    ReportRequest:
+      type: object
+      required:
+        - title
+        - description
+        - locationText
+      properties:
+        title:
+          type: string
+          example: "Pothole on Kennedy Avenue"
+          minLength: 3
+          maxLength: 150
+        description:
+          type: string
+          example: "Large dangerous pothole on the roadway"
+          minLength: 10
+        locationText:
+          type: string
+          example: "Kennedy Avenue, in front of the university"
+        categoryIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example: [ 1, 2 ]
     LoginRequest:
       type: object
       required:
@@ -934,32 +976,6 @@ components:
           enum: [ ADMIN, CITIZEN ]
           example: CITIZEN
 
-    ReportRequest:
-      type: object
-      required:
-        - title
-        - description
-        - locationText
-      properties:
-        title:
-          type: string
-          example: "Pothole on Kennedy Avenue"
-          minLength: 3
-          maxLength: 150
-        description:
-          type: string
-          example: "Large dangerous pothole on the roadway"
-          minLength: 10
-        locationText:
-          type: string
-          example: "Kennedy Avenue, in front of the university"
-        categoryIds:
-          type: array
-          items:
-            type: integer
-            format: int64
-          example: [ 1, 2 ]
-
     UpdateModerationStatusRequest:
       type: object
       required:
@@ -972,6 +988,7 @@ components:
         rejectionReason:
           type: string
           example: "Reporting outside area of jurisdiction"
+          description: Required if status is REJECTED
 
     UpdateReportStatusRequest:
       type: object
@@ -994,6 +1011,10 @@ components:
           type: string
           format: email
           example: moi@u2g.com
+        password:
+          type: string
+          format: password
+          example: P@ssword1
         fullName:
           type: string
           example: Duval Moi
@@ -1061,9 +1082,9 @@ components:
             $ref: "#/components/schemas/CategoryResponse"
 
     CategoryRequest:
-      type: object
       required:
         - name
+      type: object
       properties:
         name:
           type: string
@@ -1074,6 +1095,7 @@ components:
           type: string
           example: "#FFD700"
           pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Hex color code (optional, random if not provided)
 
     CategoryResponse:
       type: object

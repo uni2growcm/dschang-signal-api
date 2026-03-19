@@ -78,6 +78,19 @@ public class MediaService {
                 .stream().map(mediaMapper::toMediaDTO).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<MediaResponseApiDTO> getMediasByReportId(Long reportId) {
+        log.info("Fetching medias for report id: {}", reportId);
+        reportRepository.findById(reportId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Report not found with ID: " + reportId
+                ));
+        return mediaRepository.findByReportId(reportId)
+                .stream()
+                .map(mediaMapper::toMediaDTO)
+                .toList();
+    }
+
     public ResponseEntity<Resource> getById(Integer mediaId) {
         Media media = mediaRepository.findById(mediaId.longValue())
                 .orElseThrow(() -> new NotFoundException(
