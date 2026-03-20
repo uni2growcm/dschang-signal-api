@@ -1,7 +1,6 @@
 package u2g.codylab.dschang_signal.service;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,11 +14,13 @@ import u2g.codylab.dschang_signal.dto.MediaResponseApiDTO;
 import u2g.codylab.dschang_signal.entity.Media;
 import u2g.codylab.dschang_signal.entity.Report;
 import u2g.codylab.dschang_signal.entity.User;
+import u2g.codylab.dschang_signal.exception.NotFoundException;
 import u2g.codylab.dschang_signal.mapper.MediaMapper;
 import u2g.codylab.dschang_signal.repository.MediaRepository;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
 import u2g.codylab.dschang_signal.repository.UserRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,23 +38,26 @@ class MediaServiceTest {
     @Mock
     private StorageService storageService;
 
-    @InjectMocks
-    private MediaService mediaService;
-
     @Mock
     private ReportRepository reportRepository;
 
     @Mock
     private UserRepository userRepository;
 
-    // Mock SecurityContextHolder
+    @Mock
+    private I18nService i18nService;
+
+    @InjectMocks
+    private MediaService mediaService;
+
     @Mock
     private SecurityContext securityContext;
+
     @Mock
     private Authentication authentication;
 
-    @BeforeEach
-    void setUpSecurityContext() {
+
+    private void mockAuthenticatedUser() {
         when(authentication.getName()).thenReturn("user@test.cm");
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
@@ -66,6 +70,7 @@ class MediaServiceTest {
 
     @Test
     void shouldUploadMediaSuccessfully() {
+        mockAuthenticatedUser();
 
         Long reportId = 1L;
 
@@ -115,6 +120,7 @@ class MediaServiceTest {
 
     @Test
     void shouldThrowExceptionWhenReportNotFound() {
+        mockAuthenticatedUser();
 
         Long reportId = 99L;
 
@@ -132,7 +138,10 @@ class MediaServiceTest {
                 .thenReturn(Optional.empty());
 
 
-        assertThrows(Exception.class,
+        when(i18nService.get(anyString(), any()))
+                .thenReturn("Report not found");
+
+        assertThrows(NotFoundException.class,
                 () -> mediaService.upload(reportId, file, "test"));
 
         verify(mediaRepository, never()).save(any());
@@ -140,6 +149,7 @@ class MediaServiceTest {
 
     @Test
     void shouldThrowExceptionWhenUserNotFound() {
+        mockAuthenticatedUser();
 
         Long reportId = 1L;
 
@@ -150,11 +160,55 @@ class MediaServiceTest {
         when(userRepository.findByEmail("user@test.cm"))
                 .thenReturn(Optional.empty());
 
-
-        assertThrows(Exception.class,
+        assertThrows(NotFoundException.class,
                 () -> mediaService.upload(reportId, file, "test"));
 
         verify(reportRepository, never()).findById(any());
         verify(mediaRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldGetMediasByReportIdSuccessfully() {
+        Long reportId = 1L;
+
+        Report report = new Report();
+        report.setId(reportId);
+
+        Media media1 = new Media();
+        Media media2 = new Media();
+
+        MediaResponseApiDTO dto1 = new MediaResponseApiDTO();
+        MediaResponseApiDTO dto2 = new MediaResponseApiDTO();
+
+        when(reportRepository.findById(reportId))
+                .thenReturn(Optional.of(report));
+
+        when(mediaRepository.findByReportId(reportId))
+                .thenReturn(List.of(media1, media2));
+
+        when(mediaMapper.toMediaDTO(media1)).thenReturn(dto1);
+        when(mediaMapper.toMediaDTO(media2)).thenReturn(dto2);
+
+        var result = mediaService.getMediasByReportId(reportId);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+
+        verify(reportRepository).findById(reportId);
+        verify(mediaRepository).findByReportId(reportId);
+        verify(mediaMapper, times(2)).toMediaDTO(any(Media.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGettingMediasForNonExistingReport() {
+        Long reportId = 99L;
+
+        when(reportRepository.findById(reportId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class,
+                () -> mediaService.getMediasByReportId(reportId));
+
+        verify(mediaRepository, never()).findByReportId(any());
     }
 }
