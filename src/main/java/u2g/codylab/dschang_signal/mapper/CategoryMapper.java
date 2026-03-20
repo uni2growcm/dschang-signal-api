@@ -10,6 +10,7 @@ import u2g.codylab.dschang_signal.entity.Category;
 
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = UserMapper.class)
 public interface CategoryMapper {
@@ -20,6 +21,14 @@ public interface CategoryMapper {
     @Mapping(target = "createdBy", ignore = true)
     Category toEntity(CategoryRequestApiDTO categoryRequestApiDTO);
 
-    @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "timestampToOffsetDateTime")
+    @Mapping(target = "createdAt", expression = "java(timestampToOffsetDateTime(category.getCreatedAt()))")
+    @Mapping(target = "createdBy", ignore = true)
     CategoryResponseApiDTO toCategoryDto(Category category);
+
+    default OffsetDateTime timestampToOffsetDateTime(Timestamp timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        return timestamp.toInstant().atOffset(ZoneOffset.UTC);
+    }
 }

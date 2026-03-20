@@ -1,20 +1,23 @@
 package u2g.codylab.dschang_signal.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import u2g.codylab.dschang_signal.dto.UpdateModerationStatusRequestApiDTO;
+import u2g.codylab.dschang_signal.dto.UpdateReportStatusRequestApiDTO;
 import u2g.codylab.dschang_signal.api.ReportApi;
 import u2g.codylab.dschang_signal.dto.ReportApiDTO;
-
+import u2g.codylab.dschang_signal.dto.ReportRequestApiDTO;
+import u2g.codylab.dschang_signal.entity.ReportStatus;
 import u2g.codylab.dschang_signal.entity.User;
 import u2g.codylab.dschang_signal.exception.NotFoundException;
 import u2g.codylab.dschang_signal.repository.UserRepository;
@@ -39,8 +42,20 @@ public class ReportController implements ReportApi {
     }
 
     @Override
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ReportApiDTO> createReport(ReportRequestApiDTO reportRequestApiDTO) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userService.getUserEntityByEmail(email);
+        ReportApiDTO created = reportService.createReport(reportRequestApiDTO, currentUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<ReportApiDTO>> getAllReports(Integer page, Integer size, String sort, String moderationStatus, String reportStatus, String category, OffsetDateTime fromDate, OffsetDateTime toDate) {
+    public ResponseEntity<List<ReportApiDTO>> getAllReports(
+            Integer page, Integer size, String sort,
+            String moderationStatus, String reportStatus,
+            String category, OffsetDateTime fromDate, OffsetDateTime toDate) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
         Page<ReportApiDTO> reports = reportService.getAllReports(pageable);
         return new ResponseEntity<>(reports.getContent(), HttpStatus.OK);
@@ -53,12 +68,9 @@ public class ReportController implements ReportApi {
 
     @Override
     public ResponseEntity<List<ReportApiDTO>> getPublicReports(
-            Integer page,
-            Integer size,
-            String sort
-    ) {
-        String sortField = "created_at".equals(sort) ? "createdAt" : sort != null ? sort : "createdAt";
-
+            Integer page, Integer size, String sort) {
+        String sortField = "created_at".equals(sort) ? "createdAt"
+                : sort != null ? sort : "createdAt";
         Pageable pageable = PageRequest.of(
                 page != null ? page : 0,
                 size != null ? size : 20,
@@ -66,6 +78,26 @@ public class ReportController implements ReportApi {
         );
         Page<ReportApiDTO> reports = reportService.getPublicReports(pageable);
         return new ResponseEntity<>(reports.getContent(), HttpStatus.OK);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ReportApiDTO> updateModerationStatus(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody UpdateModerationStatusRequestApiDTO updateModerationStatusRequest) {
+        return ResponseEntity.ok(reportService.updateModerationStatus(id, updateModerationStatusRequest));
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ReportApiDTO> updateReportStatus(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody UpdateReportStatusRequestApiDTO updateReportStatusRequest) {
+
+        String statusValue = updateReportStatusRequest.getStatus().getValue();
+        ReportStatus reportStatus = ReportStatus.valueOf(statusValue);
+
+        return ResponseEntity.ok(reportService.updateReportStatus(id, reportStatus));
     }
 
     @Override
@@ -90,13 +122,9 @@ public class ReportController implements ReportApi {
     @Override
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteReport(@PathVariable("id") Long id) {
-
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userService.getUserEntityByEmail(email);
-
         reportService.deleteReport(id, currentUser);
-
         return ResponseEntity.noContent().build();
     }
-
 }
