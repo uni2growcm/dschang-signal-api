@@ -19,6 +19,8 @@ import u2g.codylab.dschang_signal.dto.ReportApiDTO;
 import u2g.codylab.dschang_signal.dto.ReportRequestApiDTO;
 import u2g.codylab.dschang_signal.entity.ReportStatus;
 import u2g.codylab.dschang_signal.entity.User;
+import u2g.codylab.dschang_signal.exception.NotFoundException;
+import u2g.codylab.dschang_signal.repository.UserRepository;
 import u2g.codylab.dschang_signal.service.ReportService;
 import u2g.codylab.dschang_signal.service.UserService;
 
@@ -30,10 +32,13 @@ public class ReportController implements ReportApi {
 
     private final ReportService reportService;
     private final UserService userService;
+    private final UserRepository userRepository;
 
-    public ReportController(ReportService reportService, UserService userService) {
+    public ReportController(ReportService reportService, UserService userService, UserRepository userRepository) {
         this.reportService = reportService;
         this.userService = userService;
+        this.userRepository = userRepository;
+
     }
 
     @Override
@@ -103,6 +108,25 @@ public class ReportController implements ReportApi {
         ReportStatus reportStatus = ReportStatus.valueOf(statusValue);
 
         return ResponseEntity.ok(reportService.updateReportStatus(id, reportStatus));
+    }
+
+    @Override
+    public ResponseEntity<List<ReportApiDTO>> getMyReports(
+            Integer page,
+            Integer size,
+            String sort
+    ) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
+
+        String sortField = "created_at".equals(sort) ? "createdAt" : sort != null ? sort : "createdAt";
+        Pageable pageable = PageRequest.of(
+                page != null ? page : 0,
+                size != null ? size : 20,
+                Sort.by(sortField).descending()
+        );
+        return ResponseEntity.ok(reportService.getMyReports(currentUser, pageable).getContent());
     }
 
     @Override
