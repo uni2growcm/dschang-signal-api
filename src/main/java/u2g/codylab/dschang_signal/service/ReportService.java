@@ -116,6 +116,51 @@ public class ReportService {
     }
 
     @Transactional
+    public ReportApiDTO updateReport(Long id, ReportRequestApiDTO dto, User currentUser) {
+        log.debug("Request to update report with id {}", id);
+
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("report.error.notFound", id)
+                ));
+
+        if (!report.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new ForbiddenException(i18nService.get("category.error.forbidden"));
+        }
+
+        if (report.getModerationStatus() != ModerationStatus.PENDING_REVIEW) {
+            throw new BadRequestException(
+                    "Report cannot be updated: moderation status is " + report.getModerationStatus()
+            );
+        }
+
+        if (report.getReportStatus() != ReportStatus.PENDING) {
+            throw new BadRequestException(
+                    "Report cannot be updated: report status is " + report.getReportStatus()
+            );
+        }
+
+        report.setTitle(dto.getTitle());
+        report.setDescription(dto.getDescription());
+        report.setLocationText(dto.getLocationText());
+        report.setUpdatedAt(Timestamp.from(Instant.now()));
+
+        if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
+            List<Category> categories = categoryRepository.findAllById(dto.getCategoryIds());
+            if (categories.size() != dto.getCategoryIds().size()) {
+                throw new NotFoundException("One or more categories not found");
+            }
+            report.setCategories(new HashSet<>(categories));
+        } else {
+            report.getCategories().clear();
+        }
+
+        Report updated = reportRepository.save(report);
+        log.debug("Report with id {} updated", id);
+        return reportMapper.toReportDTO(updated);
+    }
+
+    @Transactional
     public ReportApiDTO updateModerationStatus(Long id, UpdateModerationStatusRequestApiDTO request) {
         log.debug("Request to update moderation status of report with id {}", id);
 

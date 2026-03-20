@@ -18,6 +18,7 @@ import u2g.codylab.dschang_signal.mapper.ReportMapper;
 import u2g.codylab.dschang_signal.repository.CategoryRepository;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -483,6 +484,152 @@ class ReportServiceTest {
                 () -> reportService.updateReportStatus(reportId, newStatus));
 
         verify(reportRepository).findById(reportId);
+        verify(reportRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldUpdateReportSuccessfully() {
+        Long reportId = 1L;
+
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        Report report = new Report();
+        report.setId(reportId);
+        report.setCreatedBy(currentUser);
+        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+        report.setReportStatus(ReportStatus.PENDING);
+        report.setCategories(new HashSet<>());
+
+        ReportRequestApiDTO dto = new ReportRequestApiDTO();
+        dto.setTitle("Updated title");
+        dto.setDescription("Updated description valid");
+        dto.setLocationText("Updated location");
+        dto.setCategoryIds(List.of(1L));
+
+        Category category = new Category();
+        category.setId(1);
+
+        ReportApiDTO expectedDto = new ReportApiDTO();
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(categoryRepository.findAllById(dto.getCategoryIds()))
+                .thenReturn(List.of(category));
+        when(reportRepository.save(any(Report.class))).thenReturn(report);
+        when(reportMapper.toReportDTO(report)).thenReturn(expectedDto);
+
+        ReportApiDTO result = reportService.updateReport(reportId, dto, currentUser);
+
+        assertNotNull(result);
+        assertEquals("Updated title", report.getTitle());
+        assertEquals("Updated description valid", report.getDescription());
+        assertEquals("Updated location", report.getLocationText());
+
+        verify(reportRepository).findById(reportId);
+        verify(reportRepository).save(report);
+        verify(reportMapper).toReportDTO(report);
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenUpdatingNonExistentReport() {
+        Long reportId = 99L;
+
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        ReportRequestApiDTO dto = new ReportRequestApiDTO();
+        dto.setTitle("Title");
+        dto.setLocationText("Location");
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.empty());
+        when(i18nService.get(eq("report.error.notFound"), any()))
+                .thenReturn("Report not found");
+
+        assertThrows(NotFoundException.class,
+                () -> reportService.updateReport(reportId, dto, currentUser));
+
+        verify(reportRepository).findById(reportId);
+    }
+
+    @Test
+    void shouldThrowForbiddenWhenUpdatingOtherUserReport() {
+        Long reportId = 1L;
+
+        User owner = new User();
+        owner.setId(2L);
+
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        Report report = new Report();
+        report.setId(reportId);
+        report.setCreatedBy(owner);
+        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+        report.setReportStatus(ReportStatus.PENDING);
+
+        ReportRequestApiDTO dto = new ReportRequestApiDTO();
+        dto.setTitle("Updated");
+        dto.setLocationText("Location");
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        assertThrows(ForbiddenException.class,
+                () -> reportService.updateReport(reportId, dto, currentUser));
+
+        verify(reportRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowBadRequestWhenReportStatusNotPending() {
+        Long reportId = 1L;
+
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        Report report = new Report();
+        report.setId(reportId);
+        report.setCreatedBy(currentUser);
+        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+        report.setReportStatus(ReportStatus.IN_PROGRESS);
+
+        ReportRequestApiDTO dto = new ReportRequestApiDTO();
+        dto.setTitle("Updated");
+        dto.setLocationText("Location");
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        assertThrows(BadRequestException.class,
+                () -> reportService.updateReport(reportId, dto, currentUser));
+
+        verify(reportRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenUpdatingWithInvalidCategory() {
+        Long reportId = 1L;
+
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        Report report = new Report();
+        report.setId(reportId);
+        report.setCreatedBy(currentUser);
+        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+        report.setReportStatus(ReportStatus.PENDING);
+        report.setCategories(new HashSet<>());
+
+        ReportRequestApiDTO dto = new ReportRequestApiDTO();
+        dto.setTitle("Updated");
+        dto.setLocationText("Location");
+        dto.setCategoryIds(List.of(999L));
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(categoryRepository.findAllById(dto.getCategoryIds()))
+                .thenReturn(List.of());
+
+        assertThrows(NotFoundException.class,
+                () -> reportService.updateReport(reportId, dto, currentUser));
+
         verify(reportRepository, never()).save(any());
     }
 }
