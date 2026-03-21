@@ -88,7 +88,7 @@ public class ReportController implements ReportApi {
         headers.add("X-Total-Count",  String.valueOf(reports.getTotalElements()));
         headers.add("X-Page-Size",    String.valueOf(reports.getSize()));
         headers.add("X-Page-Number",  String.valueOf(reports.getNumber()));
-        return new ResponseEntity<>(reports.getContent(), HttpStatus.OK);
+        return new ResponseEntity<>(reports.getContent(), headers, HttpStatus.OK);
     }
 
     @Override
