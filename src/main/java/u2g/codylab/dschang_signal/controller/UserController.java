@@ -1,6 +1,7 @@
 package u2g.codylab.dschang_signal.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -8,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import u2g.codylab.dschang_signal.api.UserApi;
 import u2g.codylab.dschang_signal.dto.ChangeRoleRequestApiDTO;
+import u2g.codylab.dschang_signal.dto.UpdatePasswordRequestApiDTO;
+import u2g.codylab.dschang_signal.dto.UpdateProfileRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UserApiDTO;
 import u2g.codylab.dschang_signal.service.UserService;
 import org.springframework.data.domain.Page;
@@ -38,7 +41,13 @@ public class UserController implements UserApi {
 
         Pageable pageable = PageRequest.of(p, s, Sort.by(st));
         Page<UserApiDTO> usersPage = userService.getAllUsers(pageable);
-        return new ResponseEntity<>(usersPage.getContent(), HttpStatus.OK);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Total-Count",  String.valueOf(usersPage.getTotalElements()));
+        headers.add("X-Page-Size",    String.valueOf(usersPage.getSize()));
+        headers.add("X-Page-Number",  String.valueOf(usersPage.getNumber()));
+
+        return new ResponseEntity<>(usersPage.getContent(),headers, HttpStatus.OK);
     }
 
     @Override
@@ -59,4 +68,35 @@ public class UserController implements UserApi {
         String email = authentication.getName();
         return ResponseEntity.ok(userService.getUserByEmail(email));
     }
+
+    @Override
+    public ResponseEntity<Void> updatePassword(
+            @Valid @RequestBody UpdatePasswordRequestApiDTO updatePasswordRequestApiDTO) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        userService.updatePassword(
+                email,
+                updatePasswordRequestApiDTO.getCurrentPassword(),
+                updatePasswordRequestApiDTO.getNewPassword()
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<UserApiDTO> updateProfile(
+            @Valid @RequestBody UpdateProfileRequestApiDTO updateProfileRequestApiDTO) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        return ResponseEntity.ok(userService.updateProfile(
+                email,
+                updateProfileRequestApiDTO.getEmail(),
+                updateProfileRequestApiDTO.getFullName()
+        ));
+    }
+
 }

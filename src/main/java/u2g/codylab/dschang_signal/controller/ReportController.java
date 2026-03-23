@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -58,7 +59,12 @@ public class ReportController implements ReportApi {
             String category, OffsetDateTime fromDate, OffsetDateTime toDate) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
         Page<ReportApiDTO> reports = reportService.getAllReports(pageable);
-        return new ResponseEntity<>(reports.getContent(), HttpStatus.OK);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Total-Count",  String.valueOf(reports.getTotalElements()));
+        headers.add("X-Page-Size",    String.valueOf(reports.getSize()));
+        headers.add("X-Page-Number",  String.valueOf(reports.getNumber()));
+        return new ResponseEntity<>(reports.getContent(),headers, HttpStatus.OK);
     }
 
     @Override
@@ -77,7 +83,12 @@ public class ReportController implements ReportApi {
                 Sort.by(sortField).descending()
         );
         Page<ReportApiDTO> reports = reportService.getPublicReports(pageable);
-        return new ResponseEntity<>(reports.getContent(), HttpStatus.OK);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Total-Count",  String.valueOf(reports.getTotalElements()));
+        headers.add("X-Page-Size",    String.valueOf(reports.getSize()));
+        headers.add("X-Page-Number",  String.valueOf(reports.getNumber()));
+        return new ResponseEntity<>(reports.getContent(), headers, HttpStatus.OK);
     }
 
     @Override
@@ -126,7 +137,12 @@ public class ReportController implements ReportApi {
                 size != null ? size : 20,
                 Sort.by(sortField).descending()
         );
-        return ResponseEntity.ok(reportService.getMyReports(currentUser, pageable).getContent());
+        Page<ReportApiDTO> reports = reportService.getMyReports(currentUser, pageable);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Total-Count",  String.valueOf(reports.getTotalElements()));
+        headers.add("X-Page-Size",    String.valueOf(reports.getSize()));
+        headers.add("X-Page-Number",  String.valueOf(reports.getNumber()));
+        return new ResponseEntity<>(reports.getContent(),headers, HttpStatus.OK);
     }
 
     @Override

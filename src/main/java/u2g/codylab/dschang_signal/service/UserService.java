@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import u2g.codylab.dschang_signal.dto.ChangeRoleRequestApiDTO;
 import u2g.codylab.dschang_signal.dto.UserApiDTO;
@@ -22,13 +23,16 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final I18nService i18nService;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(UserMapper userMapper,
                        UserRepository userRepository,
-                       I18nService i18nService) {
+                       I18nService i18nService,
+                       PasswordEncoder passwordEncoder) {
         this.userMapper = userMapper;
         this.userRepository = userRepository;
         this.i18nService = i18nService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Page<UserApiDTO> getAllUsers(Pageable pageable) {
@@ -81,5 +85,50 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException(
                         i18nService.get("user.error.notFoundEmail", email)
                 ));
+    }
+
+    public void updatePassword(String email, String currentPassword, String newPassword) {
+        log.debug("Request to update password for user: {}", email);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("user.error.notFoundEmail", email)
+                ));
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new BadRequestException("Current password is incorrect");
+        }
+
+        if (currentPassword.equals(newPassword)){
+            throw new BadRequestException("change your newPassword");
+        } else{
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+            log.debug("Password updated for user: {}", email);
+        }
+
+    }
+
+    public UserApiDTO updateProfile(String currentEmail, String newEmail, String fullName) {
+        log.debug("Request to update profile for user: {}", currentEmail);
+
+        User user = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("user.error.notFoundEmail", currentEmail)
+                ));
+
+        if (newEmail != null && !newEmail.equals(currentEmail)) {
+            userRepository.findByEmail(newEmail).ifPresent(existing -> {
+                throw new BadRequestException("Email " + newEmail + " is already in use");
+            });
+            user.setEmail(newEmail);
+        }
+
+        if (fullName != null && !fullName.isBlank()) {
+            user.setFullName(fullName);
+        }
+
+        User updatedUser = userRepository.save(user);
+        log.debug("Profile updated for user: {}", updatedUser.getEmail());
+        return userMapper.toUserDTO(updatedUser);
     }
 }
