@@ -83,7 +83,7 @@ public class MediaService {
         log.info("Fetching medias for report id: {}", reportId);
         reportRepository.findById(reportId)
                 .orElseThrow(() -> new NotFoundException(
-                        "Report not found with ID: " + reportId
+                        i18nService.get("report.error.notFound", reportId)
                 ));
         return mediaRepository.findByReportId(reportId)
                 .stream()

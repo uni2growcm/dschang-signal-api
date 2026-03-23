@@ -49,8 +49,7 @@ public class ReportService {
         if (reportRepository.existsByTitleAndLocationText(
                 dto.getTitle(), dto.getLocationText())) {
             throw new ConflictException(
-                    "A report with the same title and location already exists"
-            );
+                    i18nService.get("report.error.exist"));
         }
 
         Report report = new Report();
@@ -130,13 +129,15 @@ public class ReportService {
 
         if (report.getModerationStatus() != ModerationStatus.PENDING_REVIEW) {
             throw new BadRequestException(
-                    "Report cannot be updated: moderation status is " + report.getModerationStatus()
+                    i18nService.get("report.error.update.moderationStatus",
+                            report.getModerationStatus())
             );
         }
 
         if (report.getReportStatus() != ReportStatus.PENDING) {
             throw new BadRequestException(
-                    "Report cannot be updated: report status is " + report.getReportStatus()
+                    i18nService.get("report.error.update.reportStatus",
+                            report.getReportStatus())
             );
         }
 
@@ -148,7 +149,9 @@ public class ReportService {
         if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
             List<Category> categories = categoryRepository.findAllById(dto.getCategoryIds());
             if (categories.size() != dto.getCategoryIds().size()) {
-                throw new NotFoundException("One or more categories not found");
+                throw new NotFoundException(
+                        i18nService.get("report.error.categories.notFound")
+                );
             }
             report.setCategories(new HashSet<>(categories));
         } else {

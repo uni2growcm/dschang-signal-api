@@ -59,7 +59,7 @@ public class CategoryService {
             return categoryDTO;
         } catch (Exception e) {
             log.error("Error while creating category: {}", categoryRequestApiDTO.getName(), e);
-            throw new BadRequestException("Error occurred while creating category, Please try again");
+            throw new BadRequestException(i18nService.get("category.error.createFailed"));
         }
     }
 
@@ -74,7 +74,7 @@ public class CategoryService {
         log.debug("Deleting category with id: {}", id);
 
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException(i18nService.get("category.error.notFound", id)));
 
         User currentUser = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new NotFoundException(
