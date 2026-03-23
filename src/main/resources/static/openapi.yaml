@@ -191,6 +191,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+    patch:
+      operationId: updateProfile
+      tags: [ User ]
+      summary: Update current user profile
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Email already in use
+
+  /users/me/password:
+    patch:
+      operationId: updatePassword
+      tags: [ User ]
+      summary: Update current user password
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequest'
+      responses:
+        '200':
+          description: Password updated successfully
+        '400':
+          description: Current password is incorrect
+
   /reports/public:
     get:
       operationId: getPublicReports
@@ -1098,4 +1139,22 @@ components:
         status:
           type: integer
         message:
+          type: string
+
+    UpdatePasswordRequest:
+      type: object
+      required: [ currentPassword, newPassword ]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        fullName:
           type: string

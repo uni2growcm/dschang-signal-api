@@ -87,7 +87,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
-        configuration.setExposedHeaders(List.of("X-Total-Count", "Link"));
+        configuration.setExposedHeaders(List.of("X-Total-Count","X-Page-Size","X-Page-Number", "Link"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
 
