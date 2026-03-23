@@ -98,9 +98,14 @@ public class UserService {
             throw new BadRequestException("Current password is incorrect");
         }
 
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-        log.debug("Password updated for user: {}", email);
+        if (currentPassword.equals(newPassword)){
+            throw new BadRequestException("change your newPassword");
+        } else{
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+            log.debug("Password updated for user: {}", email);
+        }
+
     }
 
     public UserApiDTO updateProfile(String currentEmail, String newEmail, String fullName) {

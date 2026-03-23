@@ -36,13 +36,10 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
-    // ─────────────────────────────────────────
-    // updatePassword
-    // ─────────────────────────────────────────
 
     @Test
     void shouldUpdatePasswordSuccessfully() {
-        // Given
+
         String email           = "user@dschang.cm";
         String currentPassword = "oldPassword123";
         String newPassword     = "newPassword456";
@@ -104,9 +101,6 @@ class UserServiceTest {
         verify(userRepository, never()).save(any());
     }
 
-    // ─────────────────────────────────────────
-    // updateProfile
-    // ─────────────────────────────────────────
 
     @Test
     void shouldUpdateProfileSuccessfully() {
@@ -220,7 +214,6 @@ class UserServiceTest {
 
         userService.updateProfile(email, email, "   ");
 
-        // Then
         assertEquals(originalName, user.getFullName());
         verify(userRepository).save(user);
     }
