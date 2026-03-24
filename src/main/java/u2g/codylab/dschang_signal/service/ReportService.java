@@ -87,6 +87,22 @@ public class ReportService {
     }
 
     @Transactional(readOnly = true)
+    public ReportApiDTO getPublicReportById(Long id) {
+        log.debug("Request to fetch public report by id {}", id);
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(
+                        i18nService.get("report.error.notFound", id)
+                ));
+        if (report.getModerationStatus() != ModerationStatus.ACCEPTED) {
+            throw new NotFoundException(
+                    i18nService.get("report.error.notFound", id)
+            );
+        }
+        log.debug("Public report with id {} found", id);
+        return reportMapper.toReportDTO(report);
+    }
+
+    @Transactional(readOnly = true)
     public Page<ReportApiDTO> getPublicReports(Pageable pageable) {
         log.debug("Request to fetch all reports by page {}", pageable);
         try {
