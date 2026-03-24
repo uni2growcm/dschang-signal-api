@@ -153,4 +153,9 @@ public class ReportController implements ReportApi {
         reportService.deleteReport(id, currentUser);
         return ResponseEntity.noContent().build();
     }
+
+    @Override
+    public ResponseEntity<ReportApiDTO> getPublicReportById(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(reportService.getPublicReportById(id));
+    }
 }

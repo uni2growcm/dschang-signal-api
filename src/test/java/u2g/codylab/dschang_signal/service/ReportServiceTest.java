@@ -632,4 +632,53 @@ class ReportServiceTest {
 
         verify(reportRepository, never()).save(any());
     }
+
+    @Test
+    void shouldGetPublicReportByIdWhenReportIsAccepted() {
+        Long reportId = 1L;
+
+        Report acceptedReport = new Report();
+        acceptedReport.setId(reportId);
+        acceptedReport.setModerationStatus(ModerationStatus.ACCEPTED);
+
+        ReportApiDTO expectedDto = new ReportApiDTO();
+        expectedDto.setId(reportId);
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(acceptedReport));
+        when(reportMapper.toReportDTO(acceptedReport)).thenReturn(expectedDto);
+
+        ReportApiDTO result = reportService.getPublicReportById(reportId);
+
+        assertNotNull(result);
+        assertEquals(reportId, result.getId());
+        verify(reportRepository).findById(reportId);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenPublicReportIdNotFound() {
+        Long reportId = 999L;
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.empty());
+        when(i18nService.get(eq("report.error.notFound"), any()))
+                .thenReturn("Report not found");
+
+        assertThrows(NotFoundException.class,
+                () -> reportService.getPublicReportById(reportId));
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenReportExistsButNotAccepted() {
+        Long reportId = 1L;
+
+        Report pendingReport = new Report();
+        pendingReport.setId(reportId);
+        pendingReport.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(pendingReport));
+        when(i18nService.get(eq("report.error.notFound"), any()))
+                .thenReturn("Report not found");
+
+        assertThrows(NotFoundException.class,
+                () -> reportService.getPublicReportById(reportId));
+    }
 }

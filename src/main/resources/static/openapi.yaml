@@ -263,7 +263,33 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Report'
-
+  /reports/public/{id}:
+    get:
+      operationId: getPublicReportById
+      tags: [ Report ]
+      summary: Get a specific public (accepted) report by ID
+      security: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: Report found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '404':
+          description: Report not found or not public
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /reports/my-reports:
     get:
       operationId: getMyReports
