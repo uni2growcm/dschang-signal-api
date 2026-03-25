@@ -4,6 +4,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import u2g.codylab.dschang_signal.entity.ModerationStatus;
 import u2g.codylab.dschang_signal.entity.Report;
@@ -16,4 +18,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
     @EntityGraph(attributePaths = {"createdBy"})
     Page<Report> findByCreatedBy(User createdBy, Pageable pageable);
+
+    @Query("SELECT COUNT(r) FROM Report r WHERE r.createdBy.id = :userId AND FUNCTION('DATE', r.createdAt) = CURRENT_DATE")
+    int countUserReportsToday(@Param("userId") Long userId);
 }

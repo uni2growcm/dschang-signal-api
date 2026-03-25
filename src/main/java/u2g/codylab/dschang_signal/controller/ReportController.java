@@ -74,9 +74,8 @@ public class ReportController implements ReportApi {
 
     @Override
     public ResponseEntity<List<ReportApiDTO>> getPublicReports(
-            Integer page, Integer size, String sort) {
-        String sortField = "created_at".equals(sort) ? "createdAt"
-                : sort != null ? sort : "createdAt";
+            Integer page, Integer size, String sort, String category, String status) {
+        String sortField = "created_at".equals(sort) ? "createdAt" : sort != null ? sort : "createdAt";
         Pageable pageable = PageRequest.of(
                 page != null ? page : 0,
                 size != null ? size : 20,
@@ -85,9 +84,9 @@ public class ReportController implements ReportApi {
         Page<ReportApiDTO> reports = reportService.getPublicReports(pageable);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("X-Total-Count",  String.valueOf(reports.getTotalElements()));
-        headers.add("X-Page-Size",    String.valueOf(reports.getSize()));
-        headers.add("X-Page-Number",  String.valueOf(reports.getNumber()));
+        headers.add("X-Total-Count", String.valueOf(reports.getTotalElements()));
+        headers.add("X-Page-Size", String.valueOf(reports.getSize()));
+        headers.add("X-Page-Number", String.valueOf(reports.getNumber()));
         return new ResponseEntity<>(reports.getContent(), headers, HttpStatus.OK);
     }
 
