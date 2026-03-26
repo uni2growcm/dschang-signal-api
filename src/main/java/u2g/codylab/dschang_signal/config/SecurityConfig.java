@@ -61,7 +61,7 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(basePath + "/login", basePath + "/register", basePath + "/reports/public", basePath + "/reports/public/**").permitAll()
+                        .requestMatchers(basePath + "/login", basePath + "/register",basePath + "/auth/google",  basePath + "/test", basePath + "/reports/public", basePath + "/reports/public/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()

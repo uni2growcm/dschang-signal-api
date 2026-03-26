@@ -40,6 +40,15 @@ public class User {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
+    @Column(name = "google_id")
+    private String googleId;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(name = "auth_provider")
+    private String authProvider = "LOCAL";
+
     @JsonIgnore
     @OneToMany(mappedBy = "createdBy")
     private List<Report> reports;
