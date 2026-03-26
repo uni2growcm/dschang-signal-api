@@ -254,6 +254,15 @@ paths:
           schema:
             type: string
             default: created_at
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ PENDING, IN_PROGRESS, RESOLVED ]
       responses:
         '200':
           description: List of validated reports
