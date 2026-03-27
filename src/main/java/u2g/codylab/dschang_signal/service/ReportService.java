@@ -1,6 +1,7 @@
 package u2g.codylab.dschang_signal.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,9 @@ public class ReportService {
     private final I18nService i18nService;
     private final CategoryRepository categoryRepository;
 
+    @Value("${app.report.max-per-day:10}")
+    private int maxReportsPerDay;
+
     public ReportService(ReportRepository reportRepository,
                          ReportMapper reportMapper,
                          I18nService i18nService,
@@ -50,6 +54,14 @@ public class ReportService {
                 dto.getTitle(), dto.getLocationText())) {
             throw new ConflictException(
                     i18nService.get("report.error.exist"));
+        }
+
+        int todayReports = reportRepository.countUserReportsToday(currentUser.getId());
+
+        if (todayReports >= maxReportsPerDay && maxReportsPerDay > 0) {
+            throw new BadRequestException(
+                    i18nService.get("report.error.dailyLimit", maxReportsPerDay)
+            );
         }
 
         Report report = new Report();
@@ -106,14 +118,24 @@ public class ReportService {
     public Page<ReportApiDTO> getPublicReports(Pageable pageable) {
         log.debug("Request to fetch all reports by page {}", pageable);
         try {
-            Page<ReportApiDTO> dtos = reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED, pageable)
-                    .map(reportMapper::toReportDTO);
-            log.debug("Found {} reports by page {}", dtos.getTotalElements(), pageable);
+            Page<Report> reports = reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED, pageable);
+            log.debug("Found {} reports in database", reports.getTotalElements());
+
+            Page<ReportApiDTO> dtos = reports.map(report -> {
+                try {
+                    return reportMapper.toReportDTO(report);
+                } catch (Exception e) {
+                    log.error("Error mapping report with id {}: {}", report.getId(), e.getMessage(), e);
+                    throw new RuntimeException("Mapping failed for report " + report.getId(), e);
+                }
+            });
+
+            log.debug("Successfully mapped {} reports", dtos.getTotalElements());
             return dtos;
         } catch (Exception e) {
-            throw new BadRequestException(i18nService.get("report.error.pagination"));
+            log.error("Error in getPublicReports: {}", e.getMessage(), e);
+            throw new BadRequestException("Erreur lors de la récupération des rapports: " + e.getMessage());
         }
-
     }
 
     @Transactional(readOnly = true)
@@ -231,7 +253,6 @@ public class ReportService {
         }
         Timestamp now = new Timestamp(System.currentTimeMillis());
         report.setReviewedAt(now);
-//        report.setUpdatedAt(now);
 
         Report updated = reportRepository.save(report);
         log.info("Report {} moderation status updated from {} to {}",
@@ -317,10 +338,10 @@ public class ReportService {
     public Page<ReportApiDTO> getMyReports(User currentUser, Pageable pageable) {
         log.debug("Request to fetch reports for user {}", currentUser.getEmail());
 
-            Page<ReportApiDTO> dtos = reportRepository.findByCreatedBy(currentUser, pageable)
-                    .map(reportMapper::toReportDTO);
-            log.debug("Found {} reports for user {}", dtos.getTotalElements(), currentUser.getEmail());
-            return dtos;
+        Page<ReportApiDTO> dtos = reportRepository.findByCreatedBy(currentUser, pageable)
+                .map(reportMapper::toReportDTO);
+        log.debug("Found {} reports for user {}", dtos.getTotalElements(), currentUser.getEmail());
+        return dtos;
 
     }
 }
