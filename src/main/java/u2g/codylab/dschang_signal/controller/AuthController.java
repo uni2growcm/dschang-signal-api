@@ -19,7 +19,7 @@ import u2g.codylab.dschang_signal.service.TokenBlacklistService;
 
 @Slf4j
 @RestController
-public class AuthController implements AuthApi {
+public class AuthController {
 
     private final AuthService authService;
     private final JwtService jwtService;
@@ -31,10 +31,11 @@ public class AuthController implements AuthApi {
         this.authService = authService;
         this.jwtService = jwtService;
         this.tokenBlacklistService = tokenBlacklistService;
+        log.info("✅ AuthController initialized!");
     }
 
-    @Override
-    public ResponseEntity<AuthResponseApiDTO> login(LoginRequestApiDTO loginRequestApiDTO) {
+    @PostMapping("/api/login")
+    public ResponseEntity<AuthResponseApiDTO> login(@RequestBody LoginRequestApiDTO loginRequestApiDTO) {
         User user = authService.login(loginRequestApiDTO);
         String token = jwtService.generateToken(user.getEmail());
         tokenBlacklistService.registerActiveToken(user.getEmail(), token);
@@ -43,18 +44,18 @@ public class AuthController implements AuthApi {
         return ResponseEntity.ok(response);
     }
 
-    @Override
-    public ResponseEntity<Void> register(RegisterRequestApiDTO registerRequestApiDTO) {
+    @PostMapping("/api/register")
+    public ResponseEntity<Void> register(@RequestBody RegisterRequestApiDTO registerRequestApiDTO) {
         authService.register(registerRequestApiDTO);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @Override
+    @PostMapping("/api/logout")
     public ResponseEntity<Void> logout() {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("${server.base-path}/auth/google")
+    @PostMapping("/api/auth/google")
     public ResponseEntity<AuthResponseApiDTO> googleLogin(@RequestBody GoogleLoginRequest request) {
         log.info("Google login request received for token: {}", request.getToken() != null ? "present" : "missing");
 
@@ -68,9 +69,9 @@ public class AuthController implements AuthApi {
         log.info("Google login successful for user: {}", user.getEmail());
         return ResponseEntity.ok(response);
     }
-    @GetMapping("${server.base-path}/test")
+
+    @GetMapping("/api/test")
     public ResponseEntity<String> test() {
-        return ResponseEntity.ok("Backend is working! Google endpoint should be at: " +
-                "${server.base-path}/auth/google");
+        return ResponseEntity.ok("Backend is working! Google endpoint should be at: /api/auth/google");
     }
 }

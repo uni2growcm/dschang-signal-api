@@ -1,12 +1,14 @@
+-- Ajouter les colonnes Google à la table users
 ALTER TABLE users
-    ADD auth_provider VARCHAR(255);
+    ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(20) DEFAULT 'LOCAL';
 
 ALTER TABLE users
-    ADD avatar_url VARCHAR(255);
+    ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500);
 
 ALTER TABLE users
-    ADD google_id VARCHAR(255);
+    ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
 
+-- Rendre les colonnes NOT NULL
 ALTER TABLE categories
     ALTER COLUMN created_by SET NOT NULL;
 
