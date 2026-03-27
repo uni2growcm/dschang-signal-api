@@ -74,7 +74,7 @@ public class ReportController implements ReportApi {
 
     @Override
     public ResponseEntity<List<ReportApiDTO>> getPublicReports(
-            Integer page, Integer size, String sort, String category, String status) {
+            Integer page, Integer size, String sort) {
         String sortField = "created_at".equals(sort) ? "createdAt" : sort != null ? sort : "createdAt";
         Pageable pageable = PageRequest.of(
                 page != null ? page : 0,
@@ -153,8 +153,5 @@ public class ReportController implements ReportApi {
         return ResponseEntity.noContent().build();
     }
 
-    @Override
-    public ResponseEntity<ReportApiDTO> getPublicReportById(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(reportService.getPublicReportById(id));
-    }
+
 }
