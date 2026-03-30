@@ -34,3 +34,6 @@ storage:
   local:
     path: ${STORAGE_LOCAL_PATH:./uploads}
     base-url: /uploads
+
+google:
+      client-id: 270719315111-cqvfgncjvu1gnqeb941uku41d21kvqmm.apps.googleusercontent.com
