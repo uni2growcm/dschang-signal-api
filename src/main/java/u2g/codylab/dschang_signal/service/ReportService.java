@@ -32,6 +32,7 @@ public class ReportService {
     private final ReportMapper reportMapper;
     private final I18nService i18nService;
     private final CategoryRepository categoryRepository;
+    private final NotificationService notificationService;
 
     @Value("${app.report.max-per-day:10}")
     private int maxReportsPerDay;
@@ -39,11 +40,13 @@ public class ReportService {
     public ReportService(ReportRepository reportRepository,
                          ReportMapper reportMapper,
                          I18nService i18nService,
-                         CategoryRepository categoryRepository) {
+                         CategoryRepository categoryRepository,
+                         NotificationService notificationService) {
         this.reportRepository = reportRepository;
         this.reportMapper = reportMapper;
         this.i18nService = i18nService;
         this.categoryRepository = categoryRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -287,10 +290,20 @@ public class ReportService {
         }
 
         validateStatusTransition(currentRepStatus, newStatus);
+
+        ReportStatus oldStatus = report.getReportStatus();
         report.setReportStatus(newStatus);
         report.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
 
         Report updated = reportRepository.save(report);
+
+
+        if (oldStatus != newStatus) {
+            log.info("Creating notification for report {} status change from {} to {}",
+                    id, oldStatus, newStatus);
+            notificationService.createReportStatusChangedNotification(updated, oldStatus, newStatus);
+        }
+
         log.info("Report {} progress status updated from {} to {}",
                 id, currentRepStatus, updated.getReportStatus());
 

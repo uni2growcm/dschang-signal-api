@@ -35,13 +35,13 @@ class ReportServiceTest {
     private ReportMapper reportMapper;
 
     @Mock
-    private UserService userService;
-
-    @Mock
     private I18nService i18nService;
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private ReportService reportService;
@@ -72,6 +72,7 @@ class ReportServiceTest {
         verify(reportRepository).existsByTitleAndLocationText(dto.getTitle(), dto.getLocationText());
         verify(reportRepository).save(any(Report.class));
         verify(reportMapper).toReportDTO(savedReport);
+        verify(notificationService, never()).createReportStatusChangedNotification(any(), any(), any());
     }
 
     @Test
@@ -148,8 +149,6 @@ class ReportServiceTest {
         verify(reportRepository, never()).save(any());
     }
 
-
-
     @Test
     void shouldGetReportByIdSuccessfully() {
         Report report = new Report();
@@ -208,8 +207,6 @@ class ReportServiceTest {
         assertThrows(BadRequestException.class,
                 () -> reportService.getPublicReports(pageable));
     }
-
-
 
     @Test
     void shouldDeleteReportSuccessfully() {
@@ -310,6 +307,7 @@ class ReportServiceTest {
 
         verify(reportRepository).findById(reportId);
         verify(reportRepository).save(report);
+        verify(notificationService, never()).createReportStatusChangedNotification(any(), any(), any());
     }
 
     @Test
@@ -376,6 +374,11 @@ class ReportServiceTest {
         report.setId(reportId);
         report.setModerationStatus(ModerationStatus.ACCEPTED);
         report.setReportStatus(ReportStatus.PENDING);
+        report.setTitle("Test Report");
+
+        User user = new User();
+        user.setId(1L);
+        report.setCreatedBy(user);
 
         ReportApiDTO expectedDto = new ReportApiDTO();
 
@@ -392,6 +395,7 @@ class ReportServiceTest {
         verify(reportRepository).findById(reportId);
         verify(reportRepository).save(report);
         verify(reportMapper).toReportDTO(report);
+        verify(notificationService).createReportStatusChangedNotification(report, ReportStatus.PENDING, ReportStatus.IN_PROGRESS);
     }
 
     @Test
@@ -403,6 +407,11 @@ class ReportServiceTest {
         report.setId(reportId);
         report.setModerationStatus(ModerationStatus.ACCEPTED);
         report.setReportStatus(ReportStatus.IN_PROGRESS);
+        report.setTitle("Test Report");
+
+        User user = new User();
+        user.setId(1L);
+        report.setCreatedBy(user);
 
         ReportApiDTO expectedDto = new ReportApiDTO();
 
@@ -417,6 +426,34 @@ class ReportServiceTest {
 
         verify(reportRepository).findById(reportId);
         verify(reportRepository).save(report);
+        verify(notificationService).createReportStatusChangedNotification(report, ReportStatus.IN_PROGRESS, ReportStatus.RESOLVED);
+    }
+
+    @Test
+    void shouldCreateNotificationWhenStatusChanges() {
+        Long reportId = 1L;
+        ReportStatus oldStatus = ReportStatus.PENDING;
+        ReportStatus newStatus = ReportStatus.IN_PROGRESS;
+
+        Report report = new Report();
+        report.setId(reportId);
+        report.setModerationStatus(ModerationStatus.ACCEPTED);
+        report.setReportStatus(oldStatus);
+        report.setTitle("Test Report");
+
+        User user = new User();
+        user.setId(1L);
+        report.setCreatedBy(user);
+
+        ReportApiDTO expectedDto = new ReportApiDTO();
+
+        when(reportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(reportRepository.save(any(Report.class))).thenReturn(report);
+        when(reportMapper.toReportDTO(report)).thenReturn(expectedDto);
+
+        reportService.updateReportStatus(reportId, newStatus);
+
+        verify(notificationService, times(1)).createReportStatusChangedNotification(report, oldStatus, newStatus);
     }
 
     @Test
@@ -435,6 +472,7 @@ class ReportServiceTest {
                 () -> reportService.updateReportStatus(reportId, newStatus));
 
         verify(reportRepository, never()).save(any());
+        verify(notificationService, never()).createReportStatusChangedNotification(any(), any(), any());
     }
 
     @Test
@@ -453,6 +491,7 @@ class ReportServiceTest {
                 () -> reportService.updateReportStatus(reportId, newStatus));
 
         verify(reportRepository, never()).save(any());
+        verify(notificationService, never()).createReportStatusChangedNotification(any(), any(), any());
     }
 
     @Test
@@ -471,6 +510,7 @@ class ReportServiceTest {
                 () -> reportService.updateReportStatus(reportId, newStatus));
 
         verify(reportRepository, never()).save(any());
+        verify(notificationService, never()).createReportStatusChangedNotification(any(), any(), any());
     }
 
     @Test
@@ -485,6 +525,7 @@ class ReportServiceTest {
 
         verify(reportRepository).findById(reportId);
         verify(reportRepository, never()).save(any());
+        verify(notificationService, never()).createReportStatusChangedNotification(any(), any(), any());
     }
 
     @Test
