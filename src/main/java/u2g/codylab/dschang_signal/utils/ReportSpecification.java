@@ -1,4 +1,4 @@
-package u2g.codylab.dschang_signal.repository;
+package u2g.codylab.dschang_signal.utils;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;

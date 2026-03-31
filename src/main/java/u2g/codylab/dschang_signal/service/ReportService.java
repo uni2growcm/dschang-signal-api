@@ -19,7 +19,7 @@ import u2g.codylab.dschang_signal.repository.CategoryRepository;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
 
 import org.springframework.data.jpa.domain.Specification;
-import u2g.codylab.dschang_signal.repository.ReportSpecification;
+import u2g.codylab.dschang_signal.utils.ReportSpecification;
 import java.time.OffsetDateTime;
 
 import java.sql.Timestamp;
