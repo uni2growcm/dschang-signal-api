@@ -253,7 +253,7 @@ paths:
           in: query
           schema:
             type: string
-            default: created_at
+            default: updatedAt
         - name: category
           in: query
           schema:
@@ -321,7 +321,7 @@ paths:
           in: query
           schema:
             type: string
-            default: createdAt
+            default: updatedAt
         - name: category
           in: query
           required: false
@@ -373,7 +373,7 @@ paths:
           required: false
           schema:
             type: string
-            default: 'reportStatus'
+            default: updatedAt
         - name: moderationStatus
           in: query
           required: false

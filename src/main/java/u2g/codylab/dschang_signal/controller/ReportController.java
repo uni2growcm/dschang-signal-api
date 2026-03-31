@@ -57,7 +57,7 @@ public class ReportController implements ReportApi {
             Integer page, Integer size, String sort,
             String moderationStatus, String reportStatus,
             String category, OffsetDateTime fromDate, OffsetDateTime toDate) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort).descending());
         Page<ReportApiDTO> reports = reportService.getAllReports(
                 pageable, moderationStatus, reportStatus, category, fromDate, toDate);
         HttpHeaders headers = new HttpHeaders();
@@ -75,7 +75,7 @@ public class ReportController implements ReportApi {
     @Override
     public ResponseEntity<List<ReportApiDTO>> getPublicReports(
             Integer page, Integer size, String sort, String category, String status) {
-        String sortField = "created_at".equals(sort) ? "createdAt" : sort != null ? sort : "createdAt";
+        String sortField = "updated_at".equals(sort) ? "updatedAt" : sort != null ? sort : "updatedAt";
         Pageable pageable = PageRequest.of(
                 page != null ? page : 0,
                 size != null ? size : 20,
@@ -131,7 +131,7 @@ public class ReportController implements ReportApi {
         User currentUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));
 
-        String sortField = "created_at".equals(sort) ? "createdAt" : sort != null ? sort : "createdAt";
+        String sortField = "updated_at".equals(sort) ? "updatedAt" : sort != null ? sort : "updatedAt";
         Pageable pageable = PageRequest.of(
                 page != null ? page : 0,
                 size != null ? size : 20,
