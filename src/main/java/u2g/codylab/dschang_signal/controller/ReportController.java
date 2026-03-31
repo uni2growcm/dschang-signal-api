@@ -58,13 +58,13 @@ public class ReportController implements ReportApi {
             String moderationStatus, String reportStatus,
             String category, OffsetDateTime fromDate, OffsetDateTime toDate) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
-        Page<ReportApiDTO> reports = reportService.getAllReports(pageable);
-
+        Page<ReportApiDTO> reports = reportService.getAllReports(
+                pageable, moderationStatus, reportStatus, category, fromDate, toDate);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("X-Total-Count",  String.valueOf(reports.getTotalElements()));
-        headers.add("X-Page-Size",    String.valueOf(reports.getSize()));
-        headers.add("X-Page-Number",  String.valueOf(reports.getNumber()));
-        return new ResponseEntity<>(reports.getContent(),headers, HttpStatus.OK);
+        headers.add("X-Total-Count", String.valueOf(reports.getTotalElements()));
+        headers.add("X-Page-Size",   String.valueOf(reports.getSize()));
+        headers.add("X-Page-Number", String.valueOf(reports.getNumber()));
+        return new ResponseEntity<>(reports.getContent(), headers, HttpStatus.OK);
     }
 
     @Override
@@ -81,11 +81,10 @@ public class ReportController implements ReportApi {
                 size != null ? size : 20,
                 Sort.by(sortField).descending()
         );
-        Page<ReportApiDTO> reports = reportService.getPublicReports(pageable);
-
+        Page<ReportApiDTO> reports = reportService.getPublicReports(pageable, status, category);
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-Total-Count", String.valueOf(reports.getTotalElements()));
-        headers.add("X-Page-Size", String.valueOf(reports.getSize()));
+        headers.add("X-Page-Size",   String.valueOf(reports.getSize()));
         headers.add("X-Page-Number", String.valueOf(reports.getNumber()));
         return new ResponseEntity<>(reports.getContent(), headers, HttpStatus.OK);
     }
@@ -124,7 +123,9 @@ public class ReportController implements ReportApi {
     public ResponseEntity<List<ReportApiDTO>> getMyReports(
             Integer page,
             Integer size,
-            String sort
+            String sort,
+            String category,
+            String status
     ) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(email)
@@ -136,14 +137,13 @@ public class ReportController implements ReportApi {
                 size != null ? size : 20,
                 Sort.by(sortField).descending()
         );
-        Page<ReportApiDTO> reports = reportService.getMyReports(currentUser, pageable);
+        Page<ReportApiDTO> reports = reportService.getMyReports(currentUser, pageable, status, category);
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-Total-Count",  String.valueOf(reports.getTotalElements()));
         headers.add("X-Page-Size",    String.valueOf(reports.getSize()));
         headers.add("X-Page-Number",  String.valueOf(reports.getNumber()));
-        return new ResponseEntity<>(reports.getContent(),headers, HttpStatus.OK);
+        return new ResponseEntity<>(reports.getContent(), headers, HttpStatus.OK);
     }
-
     @Override
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteReport(@PathVariable("id") Long id) {
