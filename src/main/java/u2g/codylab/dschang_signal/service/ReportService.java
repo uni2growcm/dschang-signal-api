@@ -18,6 +18,10 @@ import u2g.codylab.dschang_signal.mapper.ReportMapper;
 import u2g.codylab.dschang_signal.repository.CategoryRepository;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
 
+import org.springframework.data.jpa.domain.Specification;
+import u2g.codylab.dschang_signal.repository.ReportSpecification;
+import java.time.OffsetDateTime;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashSet;
@@ -115,12 +119,12 @@ public class ReportService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ReportApiDTO> getPublicReports(Pageable pageable) {
-        log.debug("Request to fetch all reports by page {}", pageable);
+    public Page<ReportApiDTO> getPublicReports(Pageable pageable, String status, String category) {
+        log.debug("Request to fetch public reports - status={}, category={}", status, category);
         try {
-            Page<Report> reports = reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED, pageable);
+            Specification<Report> spec = ReportSpecification.publicFilter(status, category);
+            Page<Report> reports = reportRepository.findAll(spec, pageable);
             log.debug("Found {} reports in database", reports.getTotalElements());
-
             Page<ReportApiDTO> dtos = reports.map(report -> {
                 try {
                     return reportMapper.toReportDTO(report);
@@ -129,7 +133,6 @@ public class ReportService {
                     throw new RuntimeException("Mapping failed for report " + report.getId(), e);
                 }
             });
-
             log.debug("Successfully mapped {} reports", dtos.getTotalElements());
             return dtos;
         } catch (Exception e) {
@@ -137,14 +140,23 @@ public class ReportService {
             throw new BadRequestException("Erreur lors de la récupération des rapports: " + e.getMessage());
         }
     }
-
-    @Transactional(readOnly = true)
-    public Page<ReportApiDTO> getAllReports(Pageable pageable) {
-        log.debug("Request to get all reports");
+    @Transactional
+    public Page<ReportApiDTO> getAllReports(
+            Pageable pageable,
+            String moderationStatus,
+            String reportStatus,
+            String category,
+            OffsetDateTime fromDate,
+            OffsetDateTime toDate
+    ) {
+        log.debug("Request to get all reports - moderationStatus={}, reportStatus={}, category={}",
+                moderationStatus, reportStatus, category);
         try {
-            Page<Report> reports = reportRepository.findAll(pageable);
+            Specification<Report> spec = ReportSpecification.adminFilter(
+                    moderationStatus, reportStatus, category, fromDate, toDate);
+            Page<Report> reports = reportRepository.findAll(spec, pageable);
             Page<ReportApiDTO> reportsDTO = reports.map(reportMapper::toReportDTO);
-            log.debug("Reports found: {}", reportsDTO);
+            log.debug("Reports found: {}", reportsDTO.getTotalElements());
             return reportsDTO;
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -335,13 +347,15 @@ public class ReportService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ReportApiDTO> getMyReports(User currentUser, Pageable pageable) {
-        log.debug("Request to fetch reports for user {}", currentUser.getEmail());
+    public Page<ReportApiDTO> getMyReports(User currentUser, Pageable pageable, String status, String category) {
+        log.debug("Request to fetch reports for user {} - status={}, category={}",
+                currentUser.getEmail(), status, category);
 
-        Page<ReportApiDTO> dtos = reportRepository.findByCreatedBy(currentUser, pageable)
+        Specification<Report> spec = ReportSpecification.myReportsFilter(currentUser, status, category);
+        Page<ReportApiDTO> dtos = reportRepository.findAll(spec, pageable)
                 .map(reportMapper::toReportDTO);
+
         log.debug("Found {} reports for user {}", dtos.getTotalElements(), currentUser.getEmail());
         return dtos;
-
     }
 }
