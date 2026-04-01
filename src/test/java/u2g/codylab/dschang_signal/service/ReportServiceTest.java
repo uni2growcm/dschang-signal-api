@@ -17,6 +17,7 @@ import u2g.codylab.dschang_signal.exception.NotFoundException;
 import u2g.codylab.dschang_signal.mapper.ReportMapper;
 import u2g.codylab.dschang_signal.repository.CategoryRepository;
 import u2g.codylab.dschang_signal.repository.ReportRepository;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.HashSet;
 import java.util.List;
@@ -185,15 +186,15 @@ class ReportServiceTest {
         ReportApiDTO dto = new ReportApiDTO();
         Page<Report> page = new PageImpl<>(List.of(report));
 
-        when(reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED, pageable))
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(page);
         when(reportMapper.toReportDTO(report)).thenReturn(dto);
 
-        Page<ReportApiDTO> result = reportService.getPublicReports(pageable);
+        Page<ReportApiDTO> result = reportService.getPublicReports(pageable, null, null);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
-        verify(reportRepository).findByModerationStatus(ModerationStatus.ACCEPTED, pageable);
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
         verify(reportMapper).toReportDTO(report);
     }
 
@@ -201,11 +202,11 @@ class ReportServiceTest {
     void shouldThrowBadRequestWhenPaginationFails() {
         Pageable pageable = PageRequest.of(0, 10);
 
-        when(reportRepository.findByModerationStatus(ModerationStatus.ACCEPTED, pageable))
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenThrow(new RuntimeException());
 
         assertThrows(BadRequestException.class,
-                () -> reportService.getPublicReports(pageable));
+                () -> reportService.getPublicReports(pageable, null, null));
     }
 
     @Test
@@ -237,7 +238,7 @@ class ReportServiceTest {
         assertThrows(NotFoundException.class,
                 () -> reportService.deleteReport(99L, currentUser));
 
-        verify(reportRepository, never()).delete(any());
+        verify(reportRepository, never()).delete(any(Report.class));
     }
 
     @Test
@@ -258,7 +259,7 @@ class ReportServiceTest {
         assertThrows(ForbiddenException.class,
                 () -> reportService.deleteReport(1L, currentUser));
 
-        verify(reportRepository, never()).delete(any());
+        verify(reportRepository, never()).delete(any(Report.class));
     }
 
     @Test
@@ -276,7 +277,7 @@ class ReportServiceTest {
         assertThrows(BadRequestException.class,
                 () -> reportService.deleteReport(1L, currentUser));
 
-        verify(reportRepository, never()).delete(any());
+        verify(reportRepository, never()).delete(any(Report.class));
     }
 
     @Test
@@ -721,5 +722,244 @@ class ReportServiceTest {
 
         assertThrows(NotFoundException.class,
                 () -> reportService.getPublicReportById(reportId));
+    }
+
+    @Test
+    void shouldGetPublicReportsFilteredByStatus() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Report report = new Report();
+        ReportApiDTO dto = new ReportApiDTO();
+        Page<Report> page = new PageImpl<>(List.of(report));
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+        when(reportMapper.toReportDTO(report)).thenReturn(dto);
+
+        Page<ReportApiDTO> result = reportService.getPublicReports(pageable, "PENDING", null);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void shouldGetPublicReportsFilteredByCategory() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Report report = new Report();
+        ReportApiDTO dto = new ReportApiDTO();
+        Page<Report> page = new PageImpl<>(List.of(report));
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+        when(reportMapper.toReportDTO(report)).thenReturn(dto);
+
+        Page<ReportApiDTO> result = reportService.getPublicReports(pageable, null, "Drainage");
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoPublicReportsMatchFilter() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Report> emptyPage = new PageImpl<>(List.of());
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(emptyPage);
+
+        Page<ReportApiDTO> result = reportService.getPublicReports(pageable, "RESOLVED", "Roads");
+
+        assertNotNull(result);
+        assertEquals(0, result.getTotalElements());
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
+        verify(reportMapper, never()).toReportDTO(any());
+    }
+
+    @Test
+    void shouldGetAllReportsWithoutFilters() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Report report = new Report();
+        ReportApiDTO dto = new ReportApiDTO();
+        Page<Report> page = new PageImpl<>(List.of(report));
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+        when(reportMapper.toReportDTO(report)).thenReturn(dto);
+
+        Page<ReportApiDTO> result = reportService.getAllReports(
+                pageable, null, null, null, null, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void shouldGetAllReportsFilteredByModerationStatus() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Report report = new Report();
+        report.setModerationStatus(ModerationStatus.PENDING_REVIEW);
+        ReportApiDTO dto = new ReportApiDTO();
+        Page<Report> page = new PageImpl<>(List.of(report));
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+        when(reportMapper.toReportDTO(report)).thenReturn(dto);
+
+        Page<ReportApiDTO> result = reportService.getAllReports(
+                pageable, "PENDING_REVIEW", null, null, null, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void shouldGetAllReportsFilteredByReportStatus() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Report report = new Report();
+        report.setReportStatus(ReportStatus.IN_PROGRESS);
+        ReportApiDTO dto = new ReportApiDTO();
+        Page<Report> page = new PageImpl<>(List.of(report));
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+        when(reportMapper.toReportDTO(report)).thenReturn(dto);
+
+        Page<ReportApiDTO> result = reportService.getAllReports(
+                pageable, null, "IN_PROGRESS", null, null, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void shouldGetAllReportsFilteredByCategory() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Report report = new Report();
+        ReportApiDTO dto = new ReportApiDTO();
+        Page<Report> page = new PageImpl<>(List.of(report));
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+        when(reportMapper.toReportDTO(report)).thenReturn(dto);
+
+        Page<ReportApiDTO> result = reportService.getAllReports(
+                pageable, null, null, "Roads", null, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoAdminReportsMatchFilter() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Report> emptyPage = new PageImpl<>(List.of());
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(emptyPage);
+
+        Page<ReportApiDTO> result = reportService.getAllReports(
+                pageable, "ACCEPTED", "RESOLVED", "Drainage", null, null);
+
+        assertNotNull(result);
+        assertEquals(0, result.getTotalElements());
+        verify(reportMapper, never()).toReportDTO(any());
+    }
+
+
+    @Test
+    void shouldGetMyReportsWithoutFilters() {
+        Pageable pageable = PageRequest.of(0, 10);
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        Report report = new Report();
+        ReportApiDTO dto = new ReportApiDTO();
+        Page<Report> page = new PageImpl<>(List.of(report));
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+        when(reportMapper.toReportDTO(report)).thenReturn(dto);
+
+        Page<ReportApiDTO> result = reportService.getMyReports(
+                currentUser, pageable, null, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void shouldGetMyReportsFilteredByStatus() {
+        Pageable pageable = PageRequest.of(0, 10);
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        Report report = new Report();
+        report.setReportStatus(ReportStatus.PENDING);
+        ReportApiDTO dto = new ReportApiDTO();
+        Page<Report> page = new PageImpl<>(List.of(report));
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+        when(reportMapper.toReportDTO(report)).thenReturn(dto);
+
+        Page<ReportApiDTO> result = reportService.getMyReports(
+                currentUser, pageable, "PENDING", null);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void shouldGetMyReportsFilteredByCategory() {
+        Pageable pageable = PageRequest.of(0, 10);
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        Report report = new Report();
+        ReportApiDTO dto = new ReportApiDTO();
+        Page<Report> page = new PageImpl<>(List.of(report));
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+        when(reportMapper.toReportDTO(report)).thenReturn(dto);
+
+        Page<ReportApiDTO> result = reportService.getMyReports(
+                currentUser, pageable, null, "Drainage");
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(reportRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoMyReportsMatchFilter() {
+        Pageable pageable = PageRequest.of(0, 10);
+        User currentUser = new User();
+        currentUser.setId(1L);
+
+        Page<Report> emptyPage = new PageImpl<>(List.of());
+
+        when(reportRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(emptyPage);
+
+        Page<ReportApiDTO> result = reportService.getMyReports(
+                currentUser, pageable, "RESOLVED", "Roads");
+
+        assertNotNull(result);
+        assertEquals(0, result.getTotalElements());
+        verify(reportMapper, never()).toReportDTO(any());
     }
 }
