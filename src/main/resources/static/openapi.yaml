@@ -882,9 +882,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  # ─────────────────────────────────────────
-  # NOTIFICATIONS
-  # ─────────────────────────────────────────
+
   /notifications:
     get:
       operationId: getUserNotifications
