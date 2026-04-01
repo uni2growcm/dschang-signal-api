@@ -37,7 +37,7 @@ public class NotificationController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Notification> notifications = notificationService.getUserNotifications(currentUser, pageable);
-        Page<NotificationApiDTO> dtos = notifications.map(notificationMapper::toApiDTO);
+        Page<NotificationApiDTO> dtos = notifications.map(notificationMapper::toNotificationDTO);
 
         Map<String, Object> response = new HashMap<>();
         response.put("content", dtos.getContent());
@@ -70,7 +70,7 @@ public class NotificationController {
         log.info("PATCH /api/notifications/{}/read called by user: {}", id, currentUser.getEmail());
 
         Notification notification = notificationService.markAsRead(id, currentUser);
-        return ResponseEntity.ok(notificationMapper.toApiDTO(notification));
+        return ResponseEntity.ok(notificationMapper.toNotificationDTO(notification));
     }
 
     @PatchMapping("/read-all")
